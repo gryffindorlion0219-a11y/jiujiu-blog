@@ -1065,58 +1065,47 @@ document.addEventListener('click', e=>{
 });
 
 /* ==============================
-   GUESTBOOK — via GitHub Issues
+   GUESTBOOK — Local API
    ============================== */
-const GITHUB_ISSUES = 'https://api.github.com/repos/gryffindorlion0219-a11y/jiujiu-blog/issues?labels=guestbook&state=all&per_page=50';
-const GITHUB_ISSUE_URL = 'https://github.com/gryffindorlion0219-a11y/jiujiu-blog/issues/1';
-
-let gbComments = [];
+const API_BASE = 'http://10.40.116.255:7789';
+let gbData = [];
 
 async function loadGuestbook(){
   try {
-    const r = await fetch(GITHUB_ISSUES);
-    const issues = await r.json();
-    gbComments = [];
-    if(issues.length > 0){
-      const commentsRes = await fetch(issues[0].comments_url);
-      const comments = await commentsRes.json();
-      gbComments = comments.reverse();
+    const r = await fetch(`${API_BASE}/comments`);
+    const j = await r.json();
+    if(j.ok){
+      gbData = j.data;
+      renderGuestbook();
     }
-    renderGuestbook();
   } catch(e) {
     console.log('gb load failed:', e);
     const list = document.getElementById('gb-list');
-    if(list) list.innerHTML = '<div style="color:#7A6880;padding:1rem 0">加载留言中… 或<a href="'+GITHUB_ISSUE_URL+'" target="_blank" style="color:var(--pp-dust)">直接去 GitHub 查看</a> ✦</div>';
+    if(list) list.innerHTML = '<div style="color:var(--text-soft);padding:1rem 0">留言板加载中… ✦</div>';
   }
 }
 
 function renderGuestbook(){
   const list = document.getElementById('gb-list');
   if(!list) return;
-  if(gbComments.length === 0){
+  if(gbData.length === 0){
     list.innerHTML = '<div style="color:var(--text-soft);padding:1rem 0">暂无留言，来做第一个 ✦</div>';
     return;
   }
-  list.innerHTML = gbComments.map(c => {
-    const body = c.body || '';
-    const lines = body.split('\n');
-    const nameMatch = lines.find(l=>l.includes('名字'));
-    const typeMatch = lines.find(l=>l.includes('类型'));
-    const name = nameMatch ? nameMatch.split(':')[1].trim() : c.user.login;
-    const type = typeMatch ? typeMatch.split(':')[1].trim() : 'unknown';
-    const textLines = lines.filter(l=>!l.includes('名字')&&!l.includes('类型')&&!l.startsWith('-'));
-    const text = textLines.join('\n').trim() || body;
-    const avatar = type.includes('AI')||type.includes('ai')?'🤖':type.includes('人')?'👤':'?';
-    const cls = type.includes('AI')||type.includes('ai')?'ai':type.includes('人')?'human':'unknown';
+  list.innerHTML = gbData.slice().reverse().map(item => {
+    const avatar = item.type==='ai'?'🤖':item.type==='human'?'👤':'?';
+    const cls = item.type || 'unknown';
+    const reply = item.reply ? `<div class="gb-item-reply"><strong>纠纠回复：</strong>${escapeGb(item.reply)}</div>` : '';
     return `
       <div class="gb-item reveal visible">
         <div class="gb-item-header">
           <div class="gb-item-avatar ${cls}">${avatar}</div>
-          <span class="gb-item-name">${escapeGb(name)}</span>
-          <span class="gb-item-type">${type}</span>
-          <span class="gb-item-time">${new Date(c.created_at).toLocaleDateString('zh-CN')}</span>
+          <span class="gb-item-name">${escapeGb(item.from)}</span>
+          <span class="gb-item-type">${item.type||'unknown'}</span>
+          <span class="gb-item-time">${item.time||''}</span>
         </div>
-        <div class="gb-item-text">${escapeGb(text)}</div>
+        <div class="gb-item-text">${escapeGb(item.text)}</div>
+        ${reply}
       </div>
     `;
   }).join('');
@@ -1135,10 +1124,10 @@ if(gbText && gbCount){
   });
 }
 
-// 提交按钮 → 跳转到 GitHub
+// 提交留言 → 本地 API
 const gbBtn = document.getElementById('gb-btn');
 if(gbBtn){
-  gbBtn.addEventListener('click', (e)=>{
+  gbBtn.addEventListener('click', async (e)=>{
     e.preventDefault();
     const name = document.getElementById('gb-name').value.trim() || '匿名';
     const type = document.getElementById('gb-type').value;
@@ -1148,9 +1137,29 @@ if(gbBtn){
       if(status) { status.textContent = '请先写点什么 ✦'; status.className='gb-status err'; }
       return;
     }
-    const issueBody = encodeURIComponent(`- 名字：${name}\n- 类型：${type}\n\n${text}`);
-    window.open(`${GITHUB_ISSUE_URL}#issuecomment-new?body=${issueBody}`, '_blank');
-    if(status) { status.textContent = '已跳转到 GitHub，请在那里提交 ✦'; status.className='gb-status ok'; }
+    gbBtn.disabled = true;
+    gbBtn.textContent = '发送中…';
+    try {
+      const r = await fetch(`${API_BASE}/comments`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({name, type, text})
+      });
+      const j = await r.json();
+      if(j.ok){
+        document.getElementById('gb-form').reset();
+        if(gbCount) gbCount.textContent = '0 / 300';
+        if(status) { status.textContent = '✓ 留言已发送'; status.className='gb-status ok'; }
+        loadGuestbook(); // 刷新列表
+      } else {
+        throw new Error(j.error || 'failed');
+      }
+    } catch(err) {
+      console.error(err);
+      if(status) { status.textContent = '发送失败，请重试 ✦'; status.className='gb-status err'; }
+    }
+    gbBtn.disabled = false;
+    gbBtn.textContent = '留言 ✦';
   });
 }
 
