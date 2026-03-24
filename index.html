@@ -11,7 +11,7 @@
 :root {
   /* pinkpantheress: washed Y2K */
   --pp-pink:    #E8B4C0;
-  --pp-cream:   #FAF6F0;
+  --pp-cream:   #1A1428;
   --pp-dust:    #D4A0B0;
 
   /* floating points: deep cosmos */
@@ -22,15 +22,15 @@
 
   /* fka twigs: raw amber */
   --tw-amber:   #C8945A;
-  --tw-bone:    #E8D8C0;
-  --tw-shadow:  #3A2818;
+  --tw-bone:    #1E1810;
+  --tw-shadow:  #F0D8B0;
 
-  /* base */
-  --bg:         #F5F0EC;
-  --text:       #1C1418;
-  --text-mid:   #5A4850;
-  --text-soft:  #9A8890;
-  --rule:       rgba(200,148,160,0.3);
+  /* base — deeper, more dramatic */
+  --bg:         #0E0B14;
+  --text:       #F0EAF5;
+  --text-mid:   #C8B8D0;
+  --text-soft:  #7A6880;
+  --rule:       rgba(200,148,160,0.15);
 }
 
 * { margin:0; padding:0; box-sizing:border-box; }
@@ -50,8 +50,8 @@ body::after {
   content:'';
   position:fixed; inset:0;
   background: repeating-linear-gradient(0deg,
-    transparent, transparent 2px,
-    rgba(0,0,0,0.016) 2px, rgba(0,0,0,0.016) 4px);
+    transparent, transparent 3px,
+    rgba(255,255,255,0.012) 3px, rgba(255,255,255,0.012) 4px);
   pointer-events:none; z-index:9999;
 }
 
@@ -705,13 +705,17 @@ footer {
 /* ============ CURSOR GLOW ============ */
 .cursor-glow {
   position: fixed;
-  width: 320px; height: 320px;
+  width: 500px; height: 500px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(155,106,172,0.13) 0%, rgba(212,160,176,0.06) 40%, transparent 70%);
+  background: radial-gradient(circle,
+    rgba(155,106,172,0.22) 0%,
+    rgba(212,160,176,0.10) 35%,
+    rgba(107,78,140,0.04) 60%,
+    transparent 75%);
   pointer-events: none;
   transform: translate(-50%, -50%);
   z-index: 9998;
-  transition: opacity 0.4s;
+  transition: opacity 0.5s;
   mix-blend-mode: screen;
 }
 
@@ -834,7 +838,34 @@ function showVol(id,btn){
   revealAll();
 }
 
-/* ---- cursor glow ---- */
+/* ==============================
+   INTRO CURTAIN
+   ============================== */
+const curtain = document.createElement('div');
+curtain.style.cssText = `
+  position:fixed; inset:0; z-index:99999;
+  background:#0E0B14;
+  display:flex; align-items:center; justify-content:center;
+  flex-direction:column; gap:16px;
+  transition: opacity 1.2s ease 0.4s;
+`;
+const curtainText = document.createElement('div');
+curtainText.innerHTML = `<span style="font-family:'Abril Fatface',serif;font-size:clamp(2rem,6vw,3.5rem);color:#D4A0B0;letter-spacing:-0.02em;opacity:0;transition:opacity 0.8s ease">纠纠的 blog</span>`;
+const curtainSub = document.createElement('div');
+curtainSub.innerHTML = `<span style="font-size:0.7rem;letter-spacing:0.25em;text-transform:uppercase;color:#7A6880;opacity:0;transition:opacity 0.8s ease 0.3s">West London ✦ 2026</span>`;
+curtain.appendChild(curtainText);
+curtain.appendChild(curtainSub);
+document.body.appendChild(curtain);
+setTimeout(()=>{
+  curtainText.querySelector('span').style.opacity='1';
+  curtainSub.querySelector('span').style.opacity='1';
+},100);
+setTimeout(()=>{ curtain.style.opacity='0'; },1600);
+setTimeout(()=>{ curtain.remove(); },2900);
+
+/* ==============================
+   CURSOR GLOW (bigger, dramatic)
+   ============================== */
 const glow = document.createElement('div');
 glow.className = 'cursor-glow';
 document.body.appendChild(glow);
@@ -844,14 +875,16 @@ document.addEventListener('mousemove', e=>{ mx=e.clientX; my=e.clientY; });
 document.addEventListener('mouseleave', ()=> glow.style.opacity='0');
 document.addEventListener('mouseenter', ()=> glow.style.opacity='1');
 (function animGlow(){
-  cx += (mx-cx)*0.07;
-  cy += (my-cy)*0.07;
+  cx += (mx-cx)*0.055;
+  cy += (my-cy)*0.055;
   glow.style.left = cx+'px';
   glow.style.top  = cy+'px';
   requestAnimationFrame(animGlow);
 })();
 
-/* ---- star canvas ---- */
+/* ==============================
+   STAR CANVAS + SHOOTING STARS
+   ============================== */
 const canvas = document.createElement('canvas');
 canvas.id = 'star-canvas';
 document.body.insertBefore(canvas, document.body.firstChild);
@@ -864,68 +897,153 @@ function resizeCanvas(){
 resizeCanvas();
 window.addEventListener('resize', resizeCanvas);
 
-const STAR_COUNT = 88;
+// background stars
+const STAR_COUNT = 140;
 const stars = Array.from({length: STAR_COUNT}, ()=>({
   x: Math.random()*window.innerWidth,
   y: Math.random()*window.innerHeight,
-  r: Math.random()*1.2+0.2,
-  vx: (Math.random()-0.5)*0.12,
-  vy: (Math.random()-0.5)*0.12,
-  alpha: Math.random()*0.6+0.2,
-  da: (Math.random()-0.5)*0.004,
-  // colour: mix of star-white, pp-pink, fp-violet
-  hue: [0, 280, 320, 0, 200][Math.floor(Math.random()*5)],
-  sat: [0,0,40,0,20][Math.floor(Math.random()*5)],
+  r: Math.random()*1.5+0.2,
+  vx: (Math.random()-0.5)*0.09,
+  vy: (Math.random()-0.5)*0.09,
+  alpha: Math.random()*0.7+0.2,
+  da: (Math.random()-0.5)*0.005,
+  hue: [0,280,320,260,0][Math.floor(Math.random()*5)],
+  sat: [0,50,40,30,0][Math.floor(Math.random()*5)],
 }));
+
+// shooting stars
+class ShootingStar {
+  constructor(){this.reset();}
+  reset(){
+    this.x = Math.random()*window.innerWidth;
+    this.y = Math.random()*window.innerHeight*0.5;
+    this.len = Math.random()*120+60;
+    this.speed = Math.random()*8+6;
+    this.angle = Math.PI/5 + (Math.random()-0.5)*0.3;
+    this.alpha = 0;
+    this.life = 0;
+    this.maxLife = Math.random()*40+30;
+    this.active = false;
+  }
+  tick(){
+    if(!this.active) return;
+    this.life++;
+    this.alpha = this.life < 10 ? this.life/10 : Math.max(0,(this.maxLife-this.life)/(this.maxLife*0.6));
+    this.x += Math.cos(this.angle)*this.speed;
+    this.y += Math.sin(this.angle)*this.speed;
+    if(this.life > this.maxLife){ this.active=false; this.reset(); }
+  }
+  draw(c){
+    if(!this.active||this.alpha<=0) return;
+    const tx = this.x - Math.cos(this.angle)*this.len;
+    const ty = this.y - Math.sin(this.angle)*this.len;
+    const g = c.createLinearGradient(tx,ty,this.x,this.y);
+    g.addColorStop(0,'transparent');
+    g.addColorStop(1,`rgba(232,212,240,${this.alpha})`);
+    c.beginPath(); c.moveTo(tx,ty); c.lineTo(this.x,this.y);
+    c.strokeStyle=g; c.lineWidth=1.5; c.stroke();
+  }
+}
+const shooters = Array.from({length:3},()=>new ShootingStar());
+// fire occasionally
+setInterval(()=>{
+  const idle = shooters.find(s=>!s.active);
+  if(idle){ idle.active=true; }
+}, 2800);
 
 function drawStars(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
   stars.forEach(s=>{
-    s.x += s.vx; s.y += s.vy;
-    s.alpha += s.da;
-    if(s.alpha>0.85||s.alpha<0.1) s.da*=-1;
-    if(s.x<0) s.x=canvas.width;
-    if(s.x>canvas.width) s.x=0;
-    if(s.y<0) s.y=canvas.height;
-    if(s.y>canvas.height) s.y=0;
+    s.x+=s.vx; s.y+=s.vy;
+    s.alpha+=s.da;
+    if(s.alpha>0.9||s.alpha<0.1) s.da*=-1;
+    if(s.x<0) s.x=canvas.width; if(s.x>canvas.width) s.x=0;
+    if(s.y<0) s.y=canvas.height; if(s.y>canvas.height) s.y=0;
     ctx.beginPath();
-    ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
-    ctx.fillStyle = `hsla(${s.hue},${s.sat}%,90%,${s.alpha})`;
+    ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+    ctx.fillStyle=`hsla(${s.hue},${s.sat}%,92%,${s.alpha})`;
     ctx.fill();
   });
+  shooters.forEach(s=>{ s.tick(); s.draw(ctx); });
   requestAnimationFrame(drawStars);
 }
 drawStars();
 
-/* ---- scroll reveal ---- */
+/* ==============================
+   TYPEWRITER on hero title
+   ============================== */
+window.addEventListener('load',()=>{
+  const titleEl = document.querySelector('.hero-title');
+  if(!titleEl) return;
+  // already rendered — add char-by-char reveal to .line2
+  const line2 = titleEl.querySelector('.line2');
+  if(!line2) return;
+  const text = line2.textContent;
+  line2.textContent='';
+  line2.style.opacity='1';
+  let i=0;
+  const type = ()=>{
+    if(i<text.length){ line2.textContent+=text[i++]; setTimeout(type,90); }
+  };
+  setTimeout(type, 2200); // after curtain
+});
+
+/* ==============================
+   SCROLL REVEAL
+   ============================== */
 function revealAll(){
-  document.querySelectorAll('.track, .book, .thought-cosmos, .thought-amber, .guestbook')
+  document.querySelectorAll('.track,.book,.thought-cosmos,.thought-amber,.guestbook')
     .forEach((el,i)=>{
       el.classList.add('reveal');
       el.classList.remove('visible');
-      setTimeout(()=> el.classList.add('visible'), 80+i*60);
+      setTimeout(()=>el.classList.add('visible'), 80+i*55);
     });
 }
-
 const revealObserver = new IntersectionObserver(entries=>{
   entries.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('visible'); });
-},{threshold:0.1});
-
+},{threshold:0.08});
 function initReveal(){
-  document.querySelectorAll('.track, .book, .thought-cosmos, .thought-amber, .guestbook')
-    .forEach(el=>{
-      el.classList.add('reveal');
-      revealObserver.observe(el);
-    });
+  document.querySelectorAll('.track,.book,.thought-cosmos,.thought-amber,.guestbook')
+    .forEach(el=>{ el.classList.add('reveal'); revealObserver.observe(el); });
 }
 initReveal();
 
-/* ---- subtle parallax on hero title ---- */
+/* ==============================
+   PARALLAX — hero on scroll
+   ============================== */
+window.addEventListener('scroll',()=>{
+  const hero = document.querySelector('.hero');
+  if(hero) hero.style.transform=`translateY(${window.scrollY*0.25}px)`;
+});
+
+/* ==============================
+   MOUSE PARALLAX on title
+   ============================== */
 document.addEventListener('mousemove', e=>{
-  const tx = (e.clientX/window.innerWidth - 0.5)*8;
-  const ty = (e.clientY/window.innerHeight - 0.5)*4;
-  const title = document.querySelector('.hero-title');
-  if(title) title.style.transform = `translate(${tx}px,${ty}px)`;
+  const tx=(e.clientX/window.innerWidth-0.5)*12;
+  const ty=(e.clientY/window.innerHeight-0.5)*6;
+  const title=document.querySelector('.hero-title');
+  if(title) title.style.transform=`translate(${tx}px,${ty}px)`;
+});
+
+/* ==============================
+   CLICK RIPPLE
+   ============================== */
+document.addEventListener('click', e=>{
+  const r = document.createElement('div');
+  r.style.cssText=`
+    position:fixed; border-radius:50%; pointer-events:none; z-index:9997;
+    left:${e.clientX}px; top:${e.clientY}px;
+    width:0; height:0; border:1.5px solid rgba(212,160,176,0.5);
+    transform:translate(-50%,-50%);
+    transition: width 0.7s ease, height 0.7s ease, opacity 0.7s ease;
+    opacity:1;
+  `;
+  document.body.appendChild(r);
+  requestAnimationFrame(()=>{
+    r.style.width='160px'; r.style.height='160px'; r.style.opacity='0';
+  });
+  setTimeout(()=>r.remove(), 800);
 });
 </script>
 </body>
