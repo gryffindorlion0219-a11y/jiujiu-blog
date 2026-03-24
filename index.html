@@ -557,6 +557,59 @@ footer {
   font-size:0.6rem;
 }
 
+/* 此刻在听 */
+.now-playing {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: rgba(14,11,20,0.85);
+  border: 1px solid rgba(232,180,192,0.2);
+  border-radius: 30px;
+  padding: 0.45rem 1rem 0.45rem 0.7rem;
+  backdrop-filter: blur(12px);
+  z-index: 9990;
+  cursor: default;
+  transition: opacity 0.3s, transform 0.3s;
+  opacity: 0.75;
+}
+.now-playing:hover { opacity: 1; transform: translateY(-2px); }
+
+.np-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--pp-dust);
+  animation: npPulse 1.8s ease-in-out infinite;
+  flex-shrink: 0;
+}
+@keyframes npPulse {
+  0%,100% { opacity: 0.4; transform: scale(1); }
+  50%      { opacity: 1;   transform: scale(1.3); box-shadow: 0 0 6px var(--pp-dust); }
+}
+
+.np-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  line-height: 1.2;
+}
+.np-label {
+  font-size: 0.58rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-soft);
+}
+.np-song {
+  font-size: 0.78rem;
+  color: var(--text);
+  white-space: nowrap;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 @media(max-width:560px){
   .hero-title { font-size:2.8rem; }
   .wrap { padding:0 18px 80px; }
@@ -866,6 +919,15 @@ footer {
     <span>纠纠 🐆💗 · 2026</span>
     <span class="stamp">W11 · London</span>
   </footer>
+
+  <!-- 此刻在听 -->
+  <div class="now-playing" id="now-playing">
+    <div class="np-dot"></div>
+    <div class="np-text">
+      <span class="np-label">此刻在听</span>
+      <span class="np-song" id="np-song">LesAlpx — Floating Points</span>
+    </div>
+  </div>
 </div>
 
 <style>
@@ -1246,11 +1308,18 @@ async function loadGuestbook(){
 
 /* ---- STAR MAP render ---- */
 
-// 每月星座连线形状（我手工定义，反映那个月的心情）
-// 格式：相对坐标偏移，用于把该月的星星连成特定形状
-const CONSTELLATION_SHAPES = {
-  '2026-03': [[0,1],[1,2],[2,0],[0,3]],   // 3月：三角+尾，像豹爪
-  'default': [[0,1],[1,2]]                 // 默认：简单链
+// 每月星座——形状+名字，每月由纠纠手工定义
+const CONSTELLATIONS = {
+  '2026-03': {
+    lines: [[0,1],[1,2],[2,0],[0,3]],
+    name: '豹爪座',
+    note: '第一批来访者'
+  },
+  'default': {
+    lines: [[0,1],[1,2]],
+    name: null,
+    note: null
+  }
 };
 
 function getMonth(timeStr){
@@ -1310,11 +1379,13 @@ function renderGuestbook(){
 
   Object.entries(byMonth).forEach(([month, group])=>{
     if(group.length < 2) return;
-    const shape = CONSTELLATION_SHAPES[month] || CONSTELLATION_SHAPES['default'];
-    ctx.strokeStyle = 'rgba(212,160,176,0.18)';
-    ctx.lineWidth = 1;
-    ctx.setLineDash([3,5]);
-    shape.forEach(([a,b])=>{
+    const c = CONSTELLATIONS[month] || CONSTELLATIONS['default'];
+
+    // 连线
+    ctx.strokeStyle = 'rgba(212,160,176,0.15)';
+    ctx.lineWidth = 0.8;
+    ctx.setLineDash([3,6]);
+    c.lines.forEach(([a,b])=>{
       if(group[a] && group[b]){
         ctx.beginPath();
         ctx.moveTo(group[a]._x, group[a]._y);
@@ -1322,12 +1393,17 @@ function renderGuestbook(){
         ctx.stroke();
       }
     });
-    // 月份标签
-    if(group[0]){
-      ctx.setLineDash([]);
-      ctx.fillStyle = 'rgba(212,160,176,0.3)';
-      ctx.font = '10px Space Grotesk, sans-serif';
-      ctx.fillText(month, group[0]._x + 8, group[0]._y - 10);
+    ctx.setLineDash([]);
+
+    // 星座名
+    if(c.name && group[0]){
+      // 找星座重心
+      const cx = group.reduce((s,i)=>s+i._x,0)/group.length;
+      const cy = group.reduce((s,i)=>s+i._y,0)/group.length;
+      ctx.font = '9px Space Grotesk, sans-serif';
+      ctx.fillStyle = 'rgba(212,160,176,0.22)';
+      ctx.letterSpacing = '0.1em';
+      ctx.fillText(c.name, cx - ctx.measureText(c.name).width/2, cy + 28);
     }
   });
 
