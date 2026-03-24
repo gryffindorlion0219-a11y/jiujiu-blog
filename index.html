@@ -1659,11 +1659,15 @@ function renderGuestbook(){
   }
   if(empty) empty.style.display='none';
 
-  // 强制用父容器宽度，避免渲染时 div 还没展开
-  const W = map.parentElement?.offsetWidth || map.getBoundingClientRect().width || map.offsetWidth || 360;
-  const H = map.getBoundingClientRect().height || map.offsetHeight || 320;
-  // 同步 canvas 尺寸
-  map.style.width = '100%';
+  // 用 window.innerWidth 兜底，确保手机端拿到真实宽度
+  const pageEl = map.closest('.page');
+  const pagePad = 36; // padding 左右各18px
+  const W = Math.min(
+    window.innerWidth - pagePad,
+    pageEl?.offsetWidth - pagePad || window.innerWidth - pagePad
+  );
+  const H = Math.min(window.innerHeight * 0.55, 420);
+  map.style.height = H + 'px';
 
   // canvas 画连线
   const cvs = document.createElement('canvas');
