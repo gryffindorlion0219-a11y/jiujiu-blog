@@ -390,14 +390,14 @@ body::after {
   height: 420px;
   margin-bottom: 2.5rem;
   border-radius: 20px;
-  overflow: visible;
+  overflow: visible; /* 气泡可超出边框 */
   background: radial-gradient(ellipse at 50% 60%,
     rgba(107,78,140,0.18) 0%,
     rgba(26,20,40,0.95) 60%,
     rgba(14,11,20,1) 100%);
   cursor: crosshair;
 }
-/* 背景裁剪用伪元素 */
+/* 背景裁剪用伪元素（裁切背景但不裁气泡） */
 .gb-starmap::before {
   content: '';
   position: absolute;
@@ -406,6 +406,7 @@ body::after {
   background: inherit;
   z-index: 0;
   pointer-events: none;
+  overflow: hidden;
 }
 
 /* 空状态 */
@@ -786,7 +787,7 @@ footer {
   .about-block { gap: 1.5rem; }
 
   /* guestbook */
-  .gb-starmap { height: 260px; overflow: hidden; }
+  .gb-starmap { height: 260px; }
   .gb-bubble { width: 170px; font-size: 0.78rem; max-height: 200px; }
   .gb-bubble-text { max-height: 80px; }
   .gb-form { padding: 1rem; }
