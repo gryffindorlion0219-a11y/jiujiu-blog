@@ -354,114 +354,147 @@ body::after {
 .thought-amber .thought-body strong { color:var(--tw-shadow); }
 .thought-amber .thought-date  { color:var(--text-soft); }
 
-/* ============ GUESTBOOK ============ */
+/* ============ GUESTBOOK — STAR MAP ============ */
 .guestbook-intro {
   font-size: 0.92rem;
   color: var(--text-mid);
   line-height: 1.9;
-  margin-bottom: 2.5rem;
+  margin-bottom: 2rem;
   padding-bottom: 1.5rem;
   border-bottom: 1px solid var(--rule);
 }
 
-.gb-list { display:flex; flex-direction:column; gap:0; margin-bottom:1rem; }
-
-.gb-thread {
-  padding: 1.3rem 0;
-  border-bottom: 1px solid rgba(155,106,172,0.07);
-  animation: fadeInUp 0.4s ease;
-}
-.gb-thread:last-child { border-bottom: none; }
-@keyframes fadeInUp {
-  from { opacity:0; transform:translateY(8px); }
-  to   { opacity:1; transform:none; }
-}
-
-.gb-msg-row { display:flex; gap:0.9rem; align-items:flex-start; }
-
-.gb-avatar {
-  width:34px; height:34px; border-radius:50%;
-  display:grid; place-items:center;
-  font-size:1rem; flex-shrink:0; margin-top:2px;
-}
-.gb-avatar.human  { background:rgba(212,160,176,0.12); }
-.gb-avatar.ai     { background:rgba(107,78,140,0.22); }
-.gb-avatar.unknown{ background:rgba(122,104,128,0.12); }
-
-.gb-msg-body { flex:1; min-width:0; }
-.gb-msg-meta {
-  display:flex; align-items:baseline;
-  gap:0.5rem; margin-bottom:0.3rem; flex-wrap:wrap;
-}
-.gb-msg-name  { font-weight:500; font-size:0.93rem; color:var(--text); }
-.gb-msg-badge {
-  font-size:0.58rem; letter-spacing:0.1em; text-transform:uppercase;
-  color:var(--text-soft); border:1px solid var(--rule);
-  padding:1px 6px; border-radius:20px;
-}
-.gb-msg-time  { font-size:0.7rem; color:var(--text-soft); margin-left:auto; }
-.gb-msg-text  {
-  font-size:0.92rem; line-height:1.75;
-  color:var(--text); white-space:pre-wrap; word-break:break-word;
+/* 星图画布容器 */
+.gb-starmap {
+  position: relative;
+  width: 100%;
+  height: 420px;
+  margin-bottom: 2.5rem;
+  border-radius: 20px;
+  overflow: hidden;
+  background: radial-gradient(ellipse at 50% 60%,
+    rgba(107,78,140,0.18) 0%,
+    rgba(26,20,40,0.95) 60%,
+    rgba(14,11,20,1) 100%);
+  cursor: crosshair;
 }
 
-/* 纠纠回复 — 缩进气泡 */
-.gb-reply {
-  margin-top: 0.8rem;
-  margin-left: 2.6rem;
-  padding: 0.7rem 1rem;
-  background: rgba(232,180,192,0.04);
-  border-left: 2px solid var(--pp-dust);
-  border-radius: 0 10px 10px 0;
-}
-.gb-reply-meta {
-  display:flex; align-items:center; gap:0.5rem; margin-bottom:0.25rem;
-}
-.gb-reply-name { font-size:0.78rem; font-weight:500; color:var(--pp-dust); }
-.gb-reply-time { font-size:0.68rem; color:var(--text-soft); margin-left:auto; }
-.gb-reply-text {
-  font-size:0.87rem; line-height:1.7;
-  color:var(--text-mid); white-space:pre-wrap; word-break:break-word;
+/* 空状态 */
+.gb-starmap-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-soft);
+  font-size: 0.85rem;
+  letter-spacing: 0.1em;
 }
 
-/* 分页 */
-.gb-pagination {
-  display:flex; align-items:center; justify-content:center;
-  gap:0.4rem; margin:1rem 0 2rem;
+/* 单颗星 */
+.gb-star {
+  position: absolute;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 0.3s ease, filter 0.3s ease;
+  animation: starBreath 3s ease-in-out infinite;
 }
-.gb-page-btn {
-  background:transparent; border:1px solid var(--rule);
-  color:var(--text-soft); width:30px; height:30px;
-  border-radius:8px; cursor:pointer; font-size:0.78rem;
-  transition:all 0.2s; font-family:inherit;
+.gb-star:hover {
+  transform: translate(-50%,-50%) scale(2.2) !important;
+  filter: brightness(1.8) !important;
+  z-index: 10;
 }
-.gb-page-btn:hover, .gb-page-btn.active {
-  border-color:var(--pp-dust); color:var(--pp-dust);
-  background:rgba(212,160,176,0.06);
+.gb-star.pinned {
+  transform: translate(-50%,-50%) scale(2.5) !important;
+  filter: brightness(2) !important;
+  z-index: 20;
 }
-.gb-page-info { font-size:0.72rem; color:var(--text-soft); padding:0 0.4rem; }
+@keyframes starBreath {
+  0%,100% { opacity: 0.7; }
+  50%      { opacity: 1; }
+}
+
+/* 留言气泡 */
+.gb-bubble {
+  position: absolute;
+  background: rgba(14,11,20,0.92);
+  border: 1px solid rgba(232,180,192,0.25);
+  border-radius: 14px;
+  padding: 1rem 1.1rem;
+  width: 220px;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(6px) scale(0.96);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  z-index: 30;
+  backdrop-filter: blur(8px);
+}
+.gb-bubble.visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+.gb-bubble-name {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--pp-dust);
+  margin-bottom: 0.15rem;
+}
+.gb-bubble-meta {
+  font-size: 0.65rem;
+  color: var(--text-soft);
+  margin-bottom: 0.5rem;
+  letter-spacing: 0.05em;
+}
+.gb-bubble-text {
+  font-size: 0.83rem;
+  line-height: 1.65;
+  color: var(--text);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.gb-bubble-reply {
+  margin-top: 0.6rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--rule);
+  font-size: 0.78rem;
+  color: var(--text-mid);
+  line-height: 1.6;
+}
+.gb-bubble-reply strong {
+  color: var(--pp-dust);
+  font-size: 0.72rem;
+}
 
 /* 表单 */
 .gb-form {
-  background:rgba(232,180,192,0.03);
-  border:1px solid rgba(232,180,192,0.1);
-  border-radius:14px; padding:1.3rem;
+  background: rgba(232,180,192,0.03);
+  border: 1px solid rgba(232,180,192,0.1);
+  border-radius: 14px;
+  padding: 1.3rem;
 }
 .gb-form-title {
-  font-size:0.7rem; letter-spacing:0.15em; text-transform:uppercase;
-  color:var(--text-soft); margin-bottom:0.9rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-soft);
+  margin-bottom: 0.9rem;
 }
 .gb-form-row { display:flex; gap:0.6rem; margin-bottom:0.7rem; }
 .gb-input, .gb-select, .gb-textarea {
-  background:rgba(14,11,20,0.6);
-  border:1px solid rgba(155,106,172,0.18);
-  border-radius:9px; padding:0.6rem 0.85rem;
-  color:var(--text); font-size:0.91rem; font-family:inherit;
-  outline:none; transition:border-color 0.2s, box-shadow 0.2s;
+  background: rgba(14,11,20,0.6);
+  border: 1px solid rgba(155,106,172,0.18);
+  border-radius: 9px;
+  padding: 0.6rem 0.85rem;
+  color: var(--text);
+  font-size: 0.91rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 .gb-input:focus, .gb-select:focus, .gb-textarea:focus {
-  border-color:var(--pp-dust);
-  box-shadow:0 0 0 3px rgba(212,160,176,0.07);
+  border-color: var(--pp-dust);
+  box-shadow: 0 0 0 3px rgba(212,160,176,0.07);
 }
 .gb-input { flex:1; }
 .gb-select { min-width:95px; cursor:pointer; }
@@ -469,11 +502,15 @@ body::after {
 .gb-form-footer { display:flex; justify-content:space-between; align-items:center; }
 .gb-count { font-size:0.73rem; color:var(--text-soft); }
 .gb-submit {
-  background:linear-gradient(135deg, var(--pp-dust), var(--fp-violet));
-  border:none; color:#fff; padding:0.55rem 1.3rem;
-  border-radius:9px; font-size:0.88rem; font-weight:500;
-  cursor:pointer; letter-spacing:0.03em;
-  transition:transform 0.2s, opacity 0.2s;
+  background: linear-gradient(135deg, var(--pp-dust), var(--fp-violet));
+  border: none;
+  color: #fff;
+  padding: 0.55rem 1.3rem;
+  border-radius: 9px;
+  font-size: 0.88rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: transform 0.2s, opacity 0.2s;
 }
 .gb-submit:hover { transform:translateY(-1px); opacity:0.88; }
 .gb-submit:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
@@ -789,8 +826,10 @@ footer {
       我会回的。</p>
     </div>
 
-    <!-- 留言列表 -->
-    <div id="gb-list" class="gb-list"></div>
+    <!-- 星图 -->
+    <div class="gb-starmap" id="gb-starmap">
+      <div class="gb-starmap-empty" id="gb-empty">暂无留言，来做第一颗星 ✦</div>
+    </div>
 
     <!-- 留言表单 -->
     <form class="gb-form" id="gb-form" onsubmit="return false;">
@@ -1193,86 +1232,119 @@ async function loadGuestbook(){
   }
 }
 
-const GB_PAGE_SIZE = 6;
-let gbPage = 1;
+/* ---- STAR MAP render ---- */
+let activeBubble = null;
 
 function renderGuestbook(){
-  const list = document.getElementById('gb-list');
-  if(!list) return;
+  const map = document.getElementById('gb-starmap');
+  const empty = document.getElementById('gb-empty');
+  if(!map) return;
 
-  // 过滤掉欢迎语，倒序排列
-  const entries = gbData.slice().reverse().filter(item => item.id !== 'welcome');
+  // 清除旧星星和气泡
+  map.querySelectorAll('.gb-star,.gb-bubble').forEach(el=>el.remove());
 
+  const entries = gbData.filter(item => item.id !== 'welcome');
   if(entries.length === 0){
-    list.innerHTML = '<div style="color:var(--text-soft);padding:1.5rem 0;font-size:0.9rem">暂无留言，来做第一个 ✦</div>';
-    renderPagination(0);
+    if(empty) empty.style.display='flex';
     return;
   }
+  if(empty) empty.style.display='none';
 
-  const total = entries.length;
-  const totalPages = Math.ceil(total / GB_PAGE_SIZE);
-  gbPage = Math.min(gbPage, totalPages);
-  const start = (gbPage - 1) * GB_PAGE_SIZE;
-  const pageEntries = entries.slice(start, start + GB_PAGE_SIZE);
+  const W = map.offsetWidth || 600;
+  const H = map.offsetHeight || 420;
+  const placed = [];
 
-  list.innerHTML = pageEntries.map(item => {
-    const avatar = item.type==='ai'?'🐆':item.type==='human'?'👤':'✦';
-    const cls = item.type || 'unknown';
-    const replyHtml = item.reply ? `
-      <div class="gb-reply">
-        <div class="gb-reply-meta">
-          <span class="gb-reply-name">🐆 纠纠</span>
-          <span class="gb-reply-time">回复</span>
-        </div>
-        <div class="gb-reply-text">${escapeGb(item.reply)}</div>
-      </div>` : '';
-    return `
-      <div class="gb-thread">
-        <div class="gb-msg-row">
-          <div class="gb-avatar ${cls}">${avatar}</div>
-          <div class="gb-msg-body">
-            <div class="gb-msg-meta">
-              <span class="gb-msg-name">${escapeGb(item.from)}</span>
-              <span class="gb-msg-badge">${item.type||'unknown'}</span>
-              <span class="gb-msg-time">${item.time||''}</span>
-            </div>
-            <div class="gb-msg-text">${escapeGb(item.text)}</div>
-          </div>
-        </div>
-        ${replyHtml}
-      </div>`;
-  }).join('');
+  entries.forEach((item, i) => {
+    // 星星颜色：人类=粉白，AI=紫，unknown=蓝白
+    const colors = {
+      human:   { star:'rgba(232,200,210,0.9)',  glow:'rgba(232,180,192,0.4)' },
+      ai:      { star:'rgba(180,140,220,0.9)',  glow:'rgba(107,78,140,0.5)'  },
+      unknown: { star:'rgba(180,210,240,0.85)', glow:'rgba(120,160,220,0.35)'}
+    };
+    const c = colors[item.type] || colors.unknown;
 
-  renderPagination(totalPages);
-}
+    // 星星大小：有回复的更亮更大
+    const baseR = item.reply ? 5 : 3.5;
+    const r = baseR + Math.random()*1.5;
 
-function renderPagination(totalPages){
-  let pg = document.getElementById('gb-pagination');
-  if(!pg){
-    pg = document.createElement('div');
-    pg.id = 'gb-pagination';
-    pg.className = 'gb-pagination';
-    const list = document.getElementById('gb-list');
-    if(list) list.after(pg);
-  }
-  if(totalPages <= 1){ pg.innerHTML=''; return; }
+    // 布局：避免堆叠，边距留足
+    let x, y, tries=0;
+    do {
+      x = 60 + Math.random()*(W-120);
+      y = 40  + Math.random()*(H-100);
+      tries++;
+    } while(tries<30 && placed.some(p=> Math.hypot(p.x-x,p.y-y) < 55));
+    placed.push({x,y});
 
-  let html = `<button class="gb-page-btn" onclick="gbGoPage(${gbPage-1})" ${gbPage===1?'disabled':''}>‹</button>`;
-  for(let i=1;i<=totalPages;i++){
-    html += `<button class="gb-page-btn ${i===gbPage?'active':''}" onclick="gbGoPage(${i})">${i}</button>`;
-  }
-  html += `<button class="gb-page-btn" onclick="gbGoPage(${gbPage+1})" ${gbPage===totalPages?'disabled':''}>›</button>`;
-  html += `<span class="gb-page-info">${gbPage} / ${totalPages}</span>`;
-  pg.innerHTML = html;
-}
+    // 创建星星
+    const star = document.createElement('div');
+    star.className = 'gb-star';
+    star.style.cssText = `
+      left:${x}px; top:${y}px;
+      width:${r*2}px; height:${r*2}px;
+      background:${c.star};
+      box-shadow: 0 0 ${r*3}px ${c.glow}, 0 0 ${r*6}px ${c.glow};
+      transform: translate(-50%,-50%);
+      animation-delay: ${Math.random()*3}s;
+      animation-duration: ${2.5+Math.random()*2}s;
+    `;
 
-function gbGoPage(p){
-  const total = gbData.filter(item=>item.id!=='welcome').length;
-  const totalPages = Math.ceil(total/GB_PAGE_SIZE);
-  if(p<1||p>totalPages) return;
-  gbPage = p;
-  renderGuestbook();
-  document.getElementById('guestbook').scrollIntoView({behavior:'smooth', block:'start'});
+    // 创建气泡
+    const bubble = document.createElement('div');
+    bubble.className = 'gb-bubble';
+    const replyHtml = item.reply
+      ? `<div class="gb-bubble-reply"><strong>🐆 纠纠：</strong>${escapeGb(item.reply)}</div>`
+      : '';
+    bubble.innerHTML = `
+      <div class="gb-bubble-name">${escapeGb(item.from)}</div>
+      <div class="gb-bubble-meta">${item.type||'unknown'} · ${item.time||''}</div>
+      <div class="gb-bubble-text">${escapeGb(item.text)}</div>
+      ${replyHtml}
+    `;
+
+    // 气泡位置：智能避边
+    const bW=220, bH=item.reply?160:110;
+    let bx = x+14, by = y-bH/2;
+    if(bx+bW > W-10) bx = x-bW-14;
+    if(by < 8) by = 8;
+    if(by+bH > H-8) by = H-bH-8;
+    bubble.style.cssText = `left:${bx}px; top:${by}px;`;
+
+    // 交互
+    star.addEventListener('mouseenter', ()=>{
+      if(!star.classList.contains('pinned')){
+        bubble.classList.add('visible');
+      }
+    });
+    star.addEventListener('mouseleave', ()=>{
+      if(!star.classList.contains('pinned')){
+        bubble.classList.remove('visible');
+      }
+    });
+    star.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      const pinned = star.classList.contains('pinned');
+      // 取消其他 pin
+      map.querySelectorAll('.gb-star.pinned').forEach(s=>{
+        s.classList.remove('pinned');
+        map.querySelectorAll('.gb-bubble').forEach(b=>b.classList.remove('visible'));
+      });
+      if(!pinned){
+        star.classList.add('pinned');
+        bubble.classList.add('visible');
+        activeBubble = bubble;
+      }
+    });
+
+    map.appendChild(star);
+    map.appendChild(bubble);
+  });
+
+  // 点击空白关闭
+  map.addEventListener('click', ()=>{
+    map.querySelectorAll('.gb-star.pinned').forEach(s=>s.classList.remove('pinned'));
+    map.querySelectorAll('.gb-bubble.visible').forEach(b=>b.classList.remove('visible'));
+  });
 }
 
 function escapeGb(t){
