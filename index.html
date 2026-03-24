@@ -440,6 +440,13 @@ body::after {
   0%,100% { opacity: 0.7; }
   50%      { opacity: 1; }
 }
+@keyframes myStarPulse {
+  0%,100% { opacity: 0.8; transform:translate(-50%,-50%) scale(1); }
+  50%      { opacity: 1;   transform:translate(-50%,-50%) scale(1.15); }
+}
+.my-star {
+  animation: myStarPulse 1.2s ease-in-out infinite !important;
+}
 
 /* 留言气泡 */
 .gb-bubble {
@@ -1668,9 +1675,24 @@ function renderGuestbook(){
     ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2);
     ctx.fillStyle = `rgba(${c.star.join(',')},1)`; ctx.fill();
 
+    // 识别自己的星
+    const myId = localStorage.getItem('gb_my_id');
+    const myName = localStorage.getItem('gb_my_name');
+    const isMine = (item.id === myId) || (myName && item.from === myName);
+
+    // 如果是自己的星，画一个脉冲光环
+    if(isMine){
+      const ring = ctx.createRadialGradient(x,y,r*1.5,x,y,r*5);
+      ring.addColorStop(0, `rgba(${c.star.join(',')},0.4)`);
+      ring.addColorStop(0.5, `rgba(${c.star.join(',')},0.1)`);
+      ring.addColorStop(1, 'transparent');
+      ctx.beginPath(); ctx.arc(x,y,r*5,0,Math.PI*2);
+      ctx.fillStyle = ring; ctx.fill();
+    }
+
     // 交互热区（透明 div，正确定位）
     const hit = document.createElement('div');
-    hit.className = 'gb-star';
+    hit.className = 'gb-star' + (isMine ? ' my-star' : '');
     hit.style.cssText = `
       position:absolute;
       left:${x}px; top:${y}px;
@@ -1679,7 +1701,7 @@ function renderGuestbook(){
       background:transparent;
       z-index:2;
       animation-delay:${Math.random()*3}s;
-      animation-duration:${2.5+Math.random()*2}s;
+      animation-duration:${isMine ? '1.2s' : (2.5+Math.random()*2)+'s'};
     `;
 
     // 气泡
@@ -1688,8 +1710,9 @@ function renderGuestbook(){
     const replyHtml = item.reply
       ? `<div class="gb-bubble-reply"><strong>🐆 纠纠：</strong>${escapeGb(item.reply)}</div>`
       : '';
+    const myTag = isMine ? ' <span style="font-size:0.65rem;color:var(--pp-dust);letter-spacing:0.1em">✦ 你的星</span>' : '';
     bubble.innerHTML = `
-      <div class="gb-bubble-name">${escapeGb(item.from)}</div>
+      <div class="gb-bubble-name">${escapeGb(item.from)}${myTag}</div>
       <div class="gb-bubble-meta">${item.type||'unknown'} · ${item.time||''}</div>
       <div class="gb-bubble-text">${escapeGb(item.text)}</div>
       ${replyHtml}
@@ -1787,7 +1810,10 @@ if(gbBtn){
       if(writeR.ok){
         document.getElementById('gb-form').reset();
         if(gbCount) gbCount.textContent = '0 / 300';
-        if(status){ status.textContent='✓ 留言已发送 🐆'; status.className='gb-status ok'; }
+        if(status){ status.textContent='✓ 已加入宇宙，找找你的星 ✦'; status.className='gb-status ok'; }
+        // 记住访客身份，下次进来高亮自己的星
+        localStorage.setItem('gb_my_id', entry.id);
+        localStorage.setItem('gb_my_name', name);
         setTimeout(loadGuestbook, 1500);
       } else {
         const err = await writeR.json();
