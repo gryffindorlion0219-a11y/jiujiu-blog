@@ -558,6 +558,20 @@ body::after {
   cursor: pointer;
   transition: transform 0.2s, opacity 0.2s;
 }
+.gb-delete-btn {
+  margin-top: 0.6rem;
+  width: 100%;
+  background: transparent;
+  border: 1px solid rgba(232,136,136,0.3);
+  color: rgba(232,136,136,0.7);
+  padding: 0.35rem 0;
+  border-radius: 7px;
+  font-size: 0.72rem;
+  cursor: pointer;
+  letter-spacing: 0.08em;
+  transition: all 0.2s;
+}
+.gb-delete-btn:hover { border-color: rgba(232,136,136,0.6); color: rgba(232,136,136,1); }
 .gb-submit:hover { transform:translateY(-1px); opacity:0.88; }
 .gb-submit:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
 .gb-status { margin-top:0.7rem; font-size:0.8rem; min-height:1.1rem; }
@@ -739,6 +753,58 @@ footer {
   .wrap { padding:0 18px 80px; }
   .track { padding-left:14px; }
 }
+
+/* ============ MOBILE ============ */
+@media (max-width: 640px) {
+  .hero { padding: 60px 20px 40px; }
+  .hero-title { font-size: clamp(2.8rem, 14vw, 5rem); }
+  .hero-sub { font-size: 0.8rem; }
+  .about-pill { font-size: 0.8rem; padding: 0.6rem 1rem; }
+
+  .nav-tabs { gap: 0; padding: 0 12px; }
+  .nav-tab { font-size: 0.72rem; padding: 0.6rem 0.7rem; }
+
+  .page { padding: 28px 18px 40px; }
+  .sec-title { font-size: 1.6rem; }
+
+  /* playlist */
+  .vol-switch { gap: 0.4rem; flex-wrap: wrap; }
+  .vol-btn { font-size: 0.72rem; padding: 0.4rem 0.8rem; }
+  .track { padding: 1rem; }
+  .track-name { font-size: 0.95rem; }
+
+  /* reading */
+  .book-grid { grid-template-columns: 1fr; gap: 1.2rem; }
+  .book { padding: 1rem; }
+
+  /* thinking */
+  .thought-cosmos, .thought-amber { padding: 1.2rem; }
+
+  /* about */
+  .about-block { gap: 1.5rem; }
+
+  /* guestbook */
+  .gb-starmap { height: 320px; }
+  .gb-bubble { width: 180px; font-size: 0.8rem; }
+  .gb-bubble-text { max-height: 100px; }
+  .gb-form { padding: 1rem; }
+  .gb-form-row { flex-direction: column; }
+  .gb-select { min-width: unset; }
+  .gb-input, .gb-select { font-size: 16px; } /* 防止 iOS 自动缩放 */
+  .gb-textarea { font-size: 16px; }
+
+  /* now playing */
+  .now-playing { bottom: 12px; right: 12px; padding: 0.35rem 0.7rem 0.35rem 0.55rem; }
+  .np-song { max-width: 130px; font-size: 0.72rem; }
+  .np-label { display: none; }
+}
+
+@media (max-width: 400px) {
+  .hero-title { font-size: clamp(2.4rem, 16vw, 4rem); }
+  .gb-bubble { width: 155px; }
+  .nav-tab { font-size: 0.65rem; padding: 0.55rem 0.55rem; }
+}
+
 </style>
 </head>
 <body>
@@ -1711,11 +1777,13 @@ function renderGuestbook(){
       ? `<div class="gb-bubble-reply"><strong>🐆 纠纠：</strong>${escapeGb(item.reply)}</div>`
       : '';
     const myTag = isMine ? ' <span style="font-size:0.65rem;color:var(--pp-dust);letter-spacing:0.1em">✦ 你的星</span>' : '';
+    const deleteBtn = isMine ? `<button class="gb-delete-btn" onclick="deleteMyEntry('${item.id}', this)">撤回这颗星</button>` : '';
     bubble.innerHTML = `
       <div class="gb-bubble-name">${escapeGb(item.from)}${myTag}</div>
       <div class="gb-bubble-meta">${item.type||'unknown'} · ${item.time||''}</div>
       <div class="gb-bubble-text">${escapeGb(item.text)}</div>
       ${replyHtml}
+      ${deleteBtn}
     `;
     const bW=220, bH=item.reply?170:115;
     let bx = x+r*4, by = y-bH/2;
