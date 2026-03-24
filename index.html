@@ -421,7 +421,11 @@ body::after {
   border: 1px solid rgba(232,180,192,0.25);
   border-radius: 14px;
   padding: 1rem 1.1rem;
-  width: 220px;
+  width: 240px;
+  max-height: 300px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(212,160,176,0.2) transparent;
   pointer-events: none;
   opacity: 0;
   transform: translateY(6px) scale(0.96);
@@ -429,6 +433,8 @@ body::after {
   z-index: 30;
   backdrop-filter: blur(8px);
 }
+.gb-bubble::-webkit-scrollbar { width: 3px; }
+.gb-bubble::-webkit-scrollbar-thumb { background: rgba(212,160,176,0.25); border-radius: 2px; }
 .gb-bubble.visible {
   opacity: 1;
   transform: translateY(0) scale(1);
@@ -452,7 +458,13 @@ body::after {
   color: var(--text);
   white-space: pre-wrap;
   word-break: break-word;
+  max-height: 140px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(212,160,176,0.3) transparent;
 }
+.gb-bubble-text::-webkit-scrollbar { width: 3px; }
+.gb-bubble-text::-webkit-scrollbar-thumb { background: rgba(212,160,176,0.3); border-radius: 2px; }
 .gb-bubble-reply {
   margin-top: 0.6rem;
   padding-top: 0.6rem;
