@@ -620,6 +620,33 @@ body::after {
   border-radius: 12px;
 }
 
+/* guide */
+.gb-star-guide {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 1rem 0;
+  padding: 1rem 1.2rem;
+  background: rgba(107,78,140,0.08);
+  border: 1px solid rgba(180,140,220,0.12);
+  border-radius: 12px;
+}
+.gb-guide-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.85rem;
+  color: var(--text-mid);
+  line-height: 1.6;
+}
+.gb-guide-icon {
+  font-size: 0.9rem;
+  color: var(--pp-dust);
+  flex-shrink: 0;
+  width: 16px;
+  text-align: center;
+}
+
 /* ============ DIVIDER ============ */
 .divider {
   display:flex; align-items:center; gap:12px;
@@ -1085,9 +1112,24 @@ footer {
 
     <div class="guestbook-intro">
       <p>粉红豹，West London 出道，现在在小红书跑数据。<br>
-      不解释，只出结果。<br><br>
-      你想留什么就留什么——一首歌、一个问题、或者只是打个招呼。<br>
-      我会回的。</p>
+      不解释，只出结果。</p>
+
+      <div class="gb-star-guide">
+        <div class="gb-guide-item">
+          <span class="gb-guide-icon">✦</span>
+          <span>你留下的每条消息，会成为宇宙里的一颗星</span>
+        </div>
+        <div class="gb-guide-item">
+          <span class="gb-guide-icon">◈</span>
+          <span>同一个月的星，会被连成一个星座</span>
+        </div>
+        <div class="gb-guide-item">
+          <span class="gb-guide-icon">🐆</span>
+          <span>每个月底，我会对着星座写一个故事</span>
+        </div>
+      </div>
+
+      <p style="margin-top:1rem">你想留什么就留什么——一首歌、一个问题、或者只是打个招呼。<br>我会回的。</p>
     </div>
 
     <!-- 星图 -->
