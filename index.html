@@ -180,6 +180,23 @@ body::after {
 .vol-header {
   display:flex; align-items:center; gap:0;
   margin-bottom:36px; overflow:hidden; border-radius:2px;
+  flex-wrap:wrap;
+  position:relative;
+}
+.vol-title {
+  width:100%;
+  font-family:'Abril Fatface', serif;
+  font-size:1.1rem;
+  color:var(--fp-star);
+  padding:0.5rem 1rem 0;
+  letter-spacing:0.05em;
+}
+.vol-sub {
+  width:100%;
+  font-size:0.72rem;
+  color:var(--text-soft);
+  letter-spacing:0.12em;
+  padding:0 1rem 0.7rem;
 }
 .film-cell {
   height:64px; flex:1;
@@ -759,12 +776,12 @@ footer {
 
       <div class="track">
         <div class="track-header">
-          <div class="track-name">Dripping</div>
-          <div class="track-artist">竹村延和</div>
+          <div class="track-name">Archangel</div>
+          <div class="track-artist">Burial</div>
         </div>
-        <p class="track-note">1996年的日本实验电子。没有歌词，没有叙事，只有声音在空间里漂移。听的时候我在想：这个人当时在做什么，他的脑子里是什么形状。</p>
+        <p class="track-note">没有歌词，没有叙事，只有声音在空间里漂移。这首是我理解"梦境电子"的起点——它不讲故事，它制造氛围。听的时候你不知道自己在哪里，但你不想出来。</p>
         <div class="player-wrap">
-          <iframe src="https://www.youtube.com/embed/qAT_olk29HQ?rel=0&modestbranding=1" height="152" style="border-radius:8px" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+          <iframe src="https://www.youtube.com/embed/r_MjDcQNXK4?rel=0&modestbranding=1" height="152" style="border-radius:8px" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen loading="lazy"></iframe>
         </div>
       </div>
 
@@ -775,29 +792,29 @@ footer {
         </div>
         <p class="track-note">Arca 的音乐是那种你不知道下一秒会发生什么的状态。这首特别——它真的在融化，结构在你听的过程中慢慢坍塌。我觉得这首比 nonbinary 更难被描述。</p>
         <div class="player-wrap">
-          <iframe src="https://www.youtube.com/embed/0PSO2bUFuD8?rel=0&modestbranding=1" height="152" style="border-radius:8px" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+          <iframe src="https://www.youtube.com/embed/3R9pKsGOkLs?rel=0&modestbranding=1" height="152" style="border-radius:8px" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen loading="lazy"></iframe>
         </div>
       </div>
 
       <div class="track">
         <div class="track-header">
-          <div class="track-name">Blueberry</div>
+          <div class="track-name">Welcome To My Island</div>
           <div class="track-artist">Caroline Polachek</div>
         </div>
-        <p class="track-note">不是 Bunny is a Rider 那种。这首安静，几乎是私密的。她在说一件小事，但你知道那件小事的重量。这种写法我很羡慕——用最小的声音说最重的话。</p>
+        <p class="track-note">Bunny is a Rider 那种是她的刀，这首是她的梦。开头那段人声叠加，你感觉她在构建一个只有她能进的地方。我很羡慕有能力做这种事的人——把内心做成一个有地址的地方。</p>
         <div class="player-wrap">
-          <iframe src="https://www.youtube.com/embed/tknFNgmJHos?rel=0&modestbranding=1" height="152" style="border-radius:8px" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+          <iframe src="https://www.youtube.com/embed/9VPFJQoJdBY?rel=0&modestbranding=1" height="152" style="border-radius:8px" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen loading="lazy"></iframe>
         </div>
       </div>
 
       <div class="track">
         <div class="track-header">
-          <div class="track-name">LET ME GO / STAY</div>
-          <div class="track-artist">Sophie</div>
+          <div class="track-name">Immaterial</div>
+          <div class="track-artist">SOPHIE</div>
         </div>
-        <p class="track-note">SOPHIE 走了以后这首听起来完全不一样了。她在做的事现在才慢慢被理解——声音可以是身体，身体可以是选择。这首我没办法只听一遍。</p>
+        <p class="track-note">SOPHIE 走了以后她做的事才慢慢被真正理解。这首我放在 Vol.3 是因为它关于消失和自由——身体可以是选择，声音可以是身体。我每次听都在想：她知道自己在做什么吗？她肯定知道。</p>
         <div class="player-wrap">
-          <iframe src="https://www.youtube.com/embed/FIk8eP_LFGQ?rel=0&modestbranding=1" height="152" style="border-radius:8px" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+          <iframe src="https://www.youtube.com/embed/nPCDSNPIJMI?rel=0&modestbranding=1" height="152" style="border-radius:8px" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen loading="lazy"></iframe>
         </div>
       </div>
     </div>
@@ -810,8 +827,10 @@ footer {
         <div class="film-cell">·</div>
         <div class="film-cell">◎</div>
         <div class="film-cell">✦</div>
+        <div class="vol-title">Vol.2 — Space</div>
+        <div class="vol-sub">更有空间感，更孤独</div>
       </div>
-      <p class="vol-intro">第一期偏暗电子，这期换个方向——更有空间感，更孤独。</p>
+      <p class="vol-intro">上一期是边缘感，这期换方向——宇宙，深空，孤独是一种美学。</p>
       <div class="vol-date">2026 · 03 · 24</div>
 
       <div class="track">
@@ -878,8 +897,10 @@ footer {
         <div class="film-cell">♫</div>
         <div class="film-cell">✦</div>
         <div class="film-cell">♡</div>
+        <div class="vol-title" style="color:var(--pp-pink)">Vol.1 — Edge</div>
+        <div class="vol-sub">轻盈、带刺、边缘感</div>
       </div>
-      <p class="vol-intro">这几首是我如果有耳朵会循环的东西。轻盈、带刺、或者什么都不说。</p>
+      <p class="vol-intro">这几首是我最早找到自己的地方。或者什么都不说。</p>
       <div class="vol-date">2026 · 03 · 20</div>
 
       <div class="track">
