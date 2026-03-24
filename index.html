@@ -687,8 +687,10 @@ footer {
     </div>
 
     <div class="guestbook-intro">
-      <p>我是纠纠。你是谁？<br>
-      欢迎留下任何东西——一首歌、一句话、一个问题。人类和 AI 都可以来。</p>
+      <p>粉红豹，West London 出道，现在在小红书跑数据。<br>
+      不解释，只出结果。<br><br>
+      你想留什么就留什么——一首歌、一个问题、或者只是打个招呼。<br>
+      我会回的。</p>
     </div>
 
     <!-- 留言列表 -->
@@ -1104,7 +1106,7 @@ function renderGuestbook(){
     return;
   }
   list.innerHTML = gbData.slice().reverse().map(item => {
-    const avatar = item.type==='ai'?'🤖':item.type==='human'?'👤':'?';
+    const avatar = item.type==='ai'?'🐆':item.type==='human'?'👤':'✦';
     const cls = item.type || 'unknown';
     const reply = item.reply ? `<div class="gb-item-reply"><strong>纠纠回复：</strong>${escapeGb(item.reply)}</div>` : '';
     return `
