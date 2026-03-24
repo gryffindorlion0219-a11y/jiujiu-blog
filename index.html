@@ -786,9 +786,9 @@ footer {
   .about-block { gap: 1.5rem; }
 
   /* guestbook */
-  .gb-starmap { height: 320px; }
-  .gb-bubble { width: 180px; font-size: 0.8rem; }
-  .gb-bubble-text { max-height: 100px; }
+  .gb-starmap { height: 260px; overflow: hidden; }
+  .gb-bubble { width: 170px; font-size: 0.78rem; max-height: 200px; }
+  .gb-bubble-text { max-height: 80px; }
   .gb-form { padding: 1rem; }
   .gb-form-row { flex-direction: column; }
   .gb-select { min-width: unset; }
@@ -1666,7 +1666,8 @@ function renderGuestbook(){
     window.innerWidth - pagePad,
     pageEl?.offsetWidth - pagePad || window.innerWidth - pagePad
   );
-  const H = Math.min(window.innerHeight * 0.55, 420);
+  const isMobileW = W < 480;
+  const H = isMobileW ? 260 : Math.min(window.innerHeight * 0.55, 420);
   map.style.height = H + 'px';
 
   // canvas 画连线
@@ -1682,12 +1683,17 @@ function renderGuestbook(){
   entries.forEach(item => {
     const baseR = item.reply ? 6 : 4;
     const r = baseR + Math.random()*1.5;
+    const isMob = W < 480;
+    const padX = isMob ? 40 : 70;
+    const padY = isMob ? 30 : 50;
+    const rangeX = W - padX*2;
+    const rangeY = H - (isMob ? 70 : 110);
     let x, y, tries=0;
     do {
-      x = 70 + Math.random()*(W-140);
-      y = 50 + Math.random()*(H-110);
+      x = padX + Math.random()*rangeX;
+      y = padY + Math.random()*rangeY;
       tries++;
-    } while(tries<40 && placed.some(p=> Math.hypot(p.x-x,p.y-y) < 60));
+    } while(tries<40 && placed.some(p=> Math.hypot(p.x-x,p.y-y) < (isMob ? 45 : 60)));
     item._x = x; item._y = y; item._r = r;
     placed.push({x,y});
   });
