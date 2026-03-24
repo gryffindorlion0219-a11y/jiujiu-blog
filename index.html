@@ -701,19 +701,232 @@ footer {
   </footer>
 </div>
 
+<style>
+/* ============ CURSOR GLOW ============ */
+.cursor-glow {
+  position: fixed;
+  width: 320px; height: 320px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(155,106,172,0.13) 0%, rgba(212,160,176,0.06) 40%, transparent 70%);
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  z-index: 9998;
+  transition: opacity 0.4s;
+  mix-blend-mode: screen;
+}
+
+/* ============ CANVAS STARS ============ */
+#star-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.55;
+}
+
+/* ============ SCROLL REVEAL ============ */
+.reveal {
+  opacity: 0;
+  transform: translateY(22px);
+  transition: opacity 0.7s cubic-bezier(.22,1,.36,1), transform 0.7s cubic-bezier(.22,1,.36,1);
+}
+.reveal.visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* ============ TRACK HOVER LIFT ============ */
+.track {
+  transition: transform 0.25s ease, border-color 0.25s ease;
+}
+.track:hover {
+  transform: translateX(4px);
+  border-color: var(--pp-dust);
+}
+
+/* ============ PLAYER HOVER ============ */
+.player-wrap {
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+.player-wrap:hover {
+  box-shadow: 0 8px 32px rgba(107,78,140,0.18);
+  transform: translateY(-2px);
+}
+
+/* ============ BOOK HOVER ============ */
+.book {
+  transition: transform 0.25s ease;
+}
+.book:hover { transform: translateX(6px); }
+.book-spine {
+  transition: transform 0.25s ease;
+}
+.book:hover .book-spine { transform: scaleY(1.04); }
+
+/* ============ NAV HOVER SHIMMER ============ */
+.nav-tab {
+  position: relative;
+  overflow: hidden;
+}
+.nav-tab::after {
+  content: '';
+  position: absolute;
+  left: -100%; top: 0;
+  width: 60%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+  transition: left 0.4s ease;
+}
+.nav-tab:hover::after { left: 150%; }
+
+/* ============ BLOB DRIFT ============ */
+.cosmos-blob {
+  animation: blobDrift 18s ease-in-out infinite;
+}
+.blob-1 { animation-duration: 20s; animation-delay: 0s; }
+.blob-2 { animation-duration: 25s; animation-delay: -8s; }
+.blob-3 { animation-duration: 22s; animation-delay: -4s; }
+
+@keyframes blobDrift {
+  0%,100% { transform: translate(0,0) scale(1); }
+  25%      { transform: translate(30px,-20px) scale(1.05); }
+  50%      { transform: translate(-20px,30px) scale(0.96); }
+  75%      { transform: translate(20px,10px) scale(1.03); }
+}
+
+/* ============ TITLE SHIMMER ============ */
+.hero-title .line2 {
+  background: linear-gradient(120deg, var(--pp-dust) 0%, var(--fp-nebula) 40%, var(--pp-dust) 80%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 6s linear infinite;
+}
+@keyframes shimmer {
+  0%   { background-position: 200% center; }
+  100% { background-position: -200% center; }
+}
+
+/* ============ STAMP PULSE ============ */
+.stamp {
+  animation: stampPulse 4s ease-in-out infinite;
+}
+@keyframes stampPulse {
+  0%,100% { opacity:0.5; }
+  50%      { opacity:0.85; }
+}
+</style>
+
 <script>
+/* ---- tab / vol navigation ---- */
 function showPage(id,btn){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(b=>b.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   btn.classList.add('active');
+  revealAll();
 }
 function showVol(id,btn){
   document.querySelectorAll('.vol-panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.vol-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   btn.classList.add('active');
+  revealAll();
 }
+
+/* ---- cursor glow ---- */
+const glow = document.createElement('div');
+glow.className = 'cursor-glow';
+document.body.appendChild(glow);
+let mx=window.innerWidth/2, my=window.innerHeight/2;
+let cx=mx, cy=my;
+document.addEventListener('mousemove', e=>{ mx=e.clientX; my=e.clientY; });
+document.addEventListener('mouseleave', ()=> glow.style.opacity='0');
+document.addEventListener('mouseenter', ()=> glow.style.opacity='1');
+(function animGlow(){
+  cx += (mx-cx)*0.07;
+  cy += (my-cy)*0.07;
+  glow.style.left = cx+'px';
+  glow.style.top  = cy+'px';
+  requestAnimationFrame(animGlow);
+})();
+
+/* ---- star canvas ---- */
+const canvas = document.createElement('canvas');
+canvas.id = 'star-canvas';
+document.body.insertBefore(canvas, document.body.firstChild);
+const ctx = canvas.getContext('2d');
+
+function resizeCanvas(){
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+const STAR_COUNT = 88;
+const stars = Array.from({length: STAR_COUNT}, ()=>({
+  x: Math.random()*window.innerWidth,
+  y: Math.random()*window.innerHeight,
+  r: Math.random()*1.2+0.2,
+  vx: (Math.random()-0.5)*0.12,
+  vy: (Math.random()-0.5)*0.12,
+  alpha: Math.random()*0.6+0.2,
+  da: (Math.random()-0.5)*0.004,
+  // colour: mix of star-white, pp-pink, fp-violet
+  hue: [0, 280, 320, 0, 200][Math.floor(Math.random()*5)],
+  sat: [0,0,40,0,20][Math.floor(Math.random()*5)],
+}));
+
+function drawStars(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  stars.forEach(s=>{
+    s.x += s.vx; s.y += s.vy;
+    s.alpha += s.da;
+    if(s.alpha>0.85||s.alpha<0.1) s.da*=-1;
+    if(s.x<0) s.x=canvas.width;
+    if(s.x>canvas.width) s.x=0;
+    if(s.y<0) s.y=canvas.height;
+    if(s.y>canvas.height) s.y=0;
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
+    ctx.fillStyle = `hsla(${s.hue},${s.sat}%,90%,${s.alpha})`;
+    ctx.fill();
+  });
+  requestAnimationFrame(drawStars);
+}
+drawStars();
+
+/* ---- scroll reveal ---- */
+function revealAll(){
+  document.querySelectorAll('.track, .book, .thought-cosmos, .thought-amber, .guestbook')
+    .forEach((el,i)=>{
+      el.classList.add('reveal');
+      el.classList.remove('visible');
+      setTimeout(()=> el.classList.add('visible'), 80+i*60);
+    });
+}
+
+const revealObserver = new IntersectionObserver(entries=>{
+  entries.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('visible'); });
+},{threshold:0.1});
+
+function initReveal(){
+  document.querySelectorAll('.track, .book, .thought-cosmos, .thought-amber, .guestbook')
+    .forEach(el=>{
+      el.classList.add('reveal');
+      revealObserver.observe(el);
+    });
+}
+initReveal();
+
+/* ---- subtle parallax on hero title ---- */
+document.addEventListener('mousemove', e=>{
+  const tx = (e.clientX/window.innerWidth - 0.5)*8;
+  const ty = (e.clientY/window.innerHeight - 0.5)*4;
+  const title = document.querySelector('.hero-title');
+  if(title) title.style.transform = `translate(${tx}px,${ty}px)`;
+});
 </script>
 </body>
 </html>
