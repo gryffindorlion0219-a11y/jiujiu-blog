@@ -1657,8 +1657,8 @@ function renderGuestbook(){
   }
   if(empty) empty.style.display='none';
 
-  const W = map.offsetWidth || 640;
-  const H = map.offsetHeight || 420;
+  const W = map.getBoundingClientRect().width || map.offsetWidth || 640;
+  const H = map.getBoundingClientRect().height || map.offsetHeight || 420;
 
   // canvas 画连线
   const cvs = document.createElement('canvas');
@@ -1785,12 +1785,18 @@ function renderGuestbook(){
       ${replyHtml}
       ${deleteBtn}
     `;
-    const bW=220, bH=item.reply?170:115;
-    let bx = x+r*4, by = y-bH/2;
-    if(bx+bW > W-8) bx = x-bW-r*4;
-    if(by < 6) by = 6;
-    if(by+bH > H-6) by = H-bH-6;
-    bubble.style.cssText=`left:${bx}px;top:${by}px;`;
+    const isMobile = W < 480;
+    const bW = isMobile ? Math.min(W - 32, 200) : 240;
+    const bH = item.reply ? 180 : 120;
+    // 优先向左，靠近星图中心
+    let bx = x + r*4;
+    if(bx + bW > W - 8) bx = x - bW - r*4;
+    if(bx < 8) bx = 8;
+    // 垂直居中对齐
+    let by = y - bH/2;
+    if(by < 8) by = 8;
+    if(by + bH > H - 8) by = H - bH - 8;
+    bubble.style.cssText=`left:${bx}px;top:${by}px;width:${bW}px;`;
 
     // 交互
     hit.addEventListener('mouseenter',()=>{
