@@ -371,12 +371,22 @@ body::after {
   height: 420px;
   margin-bottom: 2.5rem;
   border-radius: 20px;
-  overflow: hidden;
+  overflow: visible;
   background: radial-gradient(ellipse at 50% 60%,
     rgba(107,78,140,0.18) 0%,
     rgba(26,20,40,0.95) 60%,
     rgba(14,11,20,1) 100%);
   cursor: crosshair;
+}
+/* 背景裁剪用伪元素 */
+.gb-starmap::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 20px;
+  background: inherit;
+  z-index: 0;
+  pointer-events: none;
 }
 
 /* 空状态 */
@@ -430,7 +440,7 @@ body::after {
   opacity: 0;
   transform: translateY(6px) scale(0.96);
   transition: opacity 0.25s ease, transform 0.25s ease;
-  z-index: 30;
+  z-index: 100;
   backdrop-filter: blur(8px);
 }
 .gb-bubble::-webkit-scrollbar { width: 3px; }
