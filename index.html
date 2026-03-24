@@ -385,6 +385,8 @@ body::after {
 .gb-starmap {
   position: relative;
   width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   height: 420px;
   margin-bottom: 2.5rem;
   border-radius: 20px;
@@ -1657,8 +1659,11 @@ function renderGuestbook(){
   }
   if(empty) empty.style.display='none';
 
-  const W = map.getBoundingClientRect().width || map.offsetWidth || 640;
-  const H = map.getBoundingClientRect().height || map.offsetHeight || 420;
+  // 强制用父容器宽度，避免渲染时 div 还没展开
+  const W = map.parentElement?.offsetWidth || map.getBoundingClientRect().width || map.offsetWidth || 360;
+  const H = map.getBoundingClientRect().height || map.offsetHeight || 320;
+  // 同步 canvas 尺寸
+  map.style.width = '100%';
 
   // canvas 画连线
   const cvs = document.createElement('canvas');
