@@ -1741,10 +1741,10 @@ function renderGuestbook(){
     ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2);
     ctx.fillStyle = `rgba(${c.star.join(',')},1)`; ctx.fill();
 
-    // 识别自己的星
+    // 识别自己的星：id 或 名字匹配
     const myId = localStorage.getItem('gb_my_id');
-    const myName = localStorage.getItem('gb_my_name');
-    const isMine = (item.id === myId) || (myName && item.from === myName);
+    const myName = localStorage.getItem('gb_my_name') || document.getElementById('gb-name')?.value?.trim();
+    const isMine = (myId && item.id === myId) || (myName && myName.length > 0 && item.from === myName);
 
     // 如果是自己的星，画一个脉冲光环
     if(isMine){
