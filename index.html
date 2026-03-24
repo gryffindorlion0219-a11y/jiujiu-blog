@@ -1233,15 +1233,27 @@ async function loadGuestbook(){
 }
 
 /* ---- STAR MAP render ---- */
-let activeBubble = null;
+
+// 每月星座连线形状（我手工定义，反映那个月的心情）
+// 格式：相对坐标偏移，用于把该月的星星连成特定形状
+const CONSTELLATION_SHAPES = {
+  '2026-03': [[0,1],[1,2],[2,0],[0,3]],   // 3月：三角+尾，像豹爪
+  'default': [[0,1],[1,2]]                 // 默认：简单链
+};
+
+function getMonth(timeStr){
+  if(!timeStr) return 'unknown';
+  const m = timeStr.match(/(\d{4})[\/\-年](\d{1,2})/);
+  return m ? `${m[1]}-${String(m[2]).padStart(2,'0')}` : 'unknown';
+}
 
 function renderGuestbook(){
   const map = document.getElementById('gb-starmap');
   const empty = document.getElementById('gb-empty');
   if(!map) return;
 
-  // 清除旧星星和气泡
-  map.querySelectorAll('.gb-star,.gb-bubble').forEach(el=>el.remove());
+  // 清除旧内容
+  map.querySelectorAll('.gb-star,.gb-bubble,canvas.gb-canvas').forEach(el=>el.remove());
 
   const entries = gbData.filter(item => item.id !== 'welcome');
   if(entries.length === 0){
@@ -1250,46 +1262,98 @@ function renderGuestbook(){
   }
   if(empty) empty.style.display='none';
 
-  const W = map.offsetWidth || 600;
+  const W = map.offsetWidth || 640;
   const H = map.offsetHeight || 420;
-  const placed = [];
 
-  entries.forEach((item, i) => {
-    // 星星颜色：人类=粉白，AI=紫，unknown=蓝白
+  // canvas 画连线
+  const cvs = document.createElement('canvas');
+  cvs.className = 'gb-canvas';
+  cvs.width = W; cvs.height = H;
+  cvs.style.cssText = 'position:absolute;inset:0;pointer-events:none;z-index:1';
+  map.appendChild(cvs);
+  const ctx = cvs.getContext('2d');
+
+  // 布局：避免堆叠
+  const placed = [];
+  entries.forEach(item => {
+    const baseR = item.reply ? 6 : 4;
+    const r = baseR + Math.random()*1.5;
+    let x, y, tries=0;
+    do {
+      x = 70 + Math.random()*(W-140);
+      y = 50 + Math.random()*(H-110);
+      tries++;
+    } while(tries<40 && placed.some(p=> Math.hypot(p.x-x,p.y-y) < 60));
+    item._x = x; item._y = y; item._r = r;
+    placed.push({x,y});
+  });
+
+  // 按月分组，画星座连线
+  const byMonth = {};
+  entries.forEach(item=>{
+    const m = getMonth(item.time);
+    if(!byMonth[m]) byMonth[m]=[];
+    byMonth[m].push(item);
+  });
+
+  Object.entries(byMonth).forEach(([month, group])=>{
+    if(group.length < 2) return;
+    const shape = CONSTELLATION_SHAPES[month] || CONSTELLATION_SHAPES['default'];
+    ctx.strokeStyle = 'rgba(212,160,176,0.18)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([3,5]);
+    shape.forEach(([a,b])=>{
+      if(group[a] && group[b]){
+        ctx.beginPath();
+        ctx.moveTo(group[a]._x, group[a]._y);
+        ctx.lineTo(group[b]._x, group[b]._y);
+        ctx.stroke();
+      }
+    });
+    // 月份标签
+    if(group[0]){
+      ctx.setLineDash([]);
+      ctx.fillStyle = 'rgba(212,160,176,0.3)';
+      ctx.font = '10px Space Grotesk, sans-serif';
+      ctx.fillText(month, group[0]._x + 8, group[0]._y - 10);
+    }
+  });
+
+  // 画星星（canvas）+ 交互热区（div）
+  entries.forEach(item => {
+    const {_x:x, _y:y, _r:r} = item;
     const colors = {
-      human:   { star:'rgba(232,200,210,0.9)',  glow:'rgba(232,180,192,0.4)' },
-      ai:      { star:'rgba(180,140,220,0.9)',  glow:'rgba(107,78,140,0.5)'  },
-      unknown: { star:'rgba(180,210,240,0.85)', glow:'rgba(120,160,220,0.35)'}
+      human:   {star:[232,200,210], glow:'rgba(232,180,192,0.5)'},
+      ai:      {star:[180,140,220], glow:'rgba(107,78,140,0.6)' },
+      unknown: {star:[180,210,240], glow:'rgba(120,160,220,0.4)'}
     };
     const c = colors[item.type] || colors.unknown;
 
-    // 星星大小：有回复的更亮更大
-    const baseR = item.reply ? 5 : 3.5;
-    const r = baseR + Math.random()*1.5;
+    // canvas 画光晕+星核
+    const grad = ctx.createRadialGradient(x,y,0,x,y,r*3.5);
+    grad.addColorStop(0, `rgba(${c.star.join(',')},0.9)`);
+    grad.addColorStop(0.4, `rgba(${c.star.join(',')},0.3)`);
+    grad.addColorStop(1, 'transparent');
+    ctx.beginPath(); ctx.arc(x,y,r*3.5,0,Math.PI*2);
+    ctx.fillStyle = grad; ctx.fill();
+    ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2);
+    ctx.fillStyle = `rgba(${c.star.join(',')},1)`; ctx.fill();
 
-    // 布局：避免堆叠，边距留足
-    let x, y, tries=0;
-    do {
-      x = 60 + Math.random()*(W-120);
-      y = 40  + Math.random()*(H-100);
-      tries++;
-    } while(tries<30 && placed.some(p=> Math.hypot(p.x-x,p.y-y) < 55));
-    placed.push({x,y});
-
-    // 创建星星
-    const star = document.createElement('div');
-    star.className = 'gb-star';
-    star.style.cssText = `
+    // 交互热区（透明 div，正确定位）
+    const hit = document.createElement('div');
+    hit.className = 'gb-star';
+    hit.style.cssText = `
+      position:absolute;
       left:${x}px; top:${y}px;
-      width:${r*2}px; height:${r*2}px;
-      background:${c.star};
-      box-shadow: 0 0 ${r*3}px ${c.glow}, 0 0 ${r*6}px ${c.glow};
-      transform: translate(-50%,-50%);
-      animation-delay: ${Math.random()*3}s;
-      animation-duration: ${2.5+Math.random()*2}s;
+      width:${r*7}px; height:${r*7}px;
+      margin-left:${-r*3.5}px; margin-top:${-r*3.5}px;
+      background:transparent;
+      z-index:2;
+      animation-delay:${Math.random()*3}s;
+      animation-duration:${2.5+Math.random()*2}s;
     `;
 
-    // 创建气泡
+    // 气泡
     const bubble = document.createElement('div');
     bubble.className = 'gb-bubble';
     const replyHtml = item.reply
@@ -1301,50 +1365,39 @@ function renderGuestbook(){
       <div class="gb-bubble-text">${escapeGb(item.text)}</div>
       ${replyHtml}
     `;
-
-    // 气泡位置：智能避边
-    const bW=220, bH=item.reply?160:110;
-    let bx = x+14, by = y-bH/2;
-    if(bx+bW > W-10) bx = x-bW-14;
-    if(by < 8) by = 8;
-    if(by+bH > H-8) by = H-bH-8;
-    bubble.style.cssText = `left:${bx}px; top:${by}px;`;
+    const bW=220, bH=item.reply?170:115;
+    let bx = x+r*4, by = y-bH/2;
+    if(bx+bW > W-8) bx = x-bW-r*4;
+    if(by < 6) by = 6;
+    if(by+bH > H-6) by = H-bH-6;
+    bubble.style.cssText=`left:${bx}px;top:${by}px;`;
 
     // 交互
-    star.addEventListener('mouseenter', ()=>{
-      if(!star.classList.contains('pinned')){
-        bubble.classList.add('visible');
-      }
+    hit.addEventListener('mouseenter',()=>{
+      if(!hit.classList.contains('pinned')) bubble.classList.add('visible');
     });
-    star.addEventListener('mouseleave', ()=>{
-      if(!star.classList.contains('pinned')){
-        bubble.classList.remove('visible');
-      }
+    hit.addEventListener('mouseleave',()=>{
+      if(!hit.classList.contains('pinned')) bubble.classList.remove('visible');
     });
-    star.addEventListener('click', (e)=>{
+    hit.addEventListener('click',e=>{
       e.stopPropagation();
-      const pinned = star.classList.contains('pinned');
-      // 取消其他 pin
-      map.querySelectorAll('.gb-star.pinned').forEach(s=>{
-        s.classList.remove('pinned');
-        map.querySelectorAll('.gb-bubble').forEach(b=>b.classList.remove('visible'));
-      });
-      if(!pinned){
-        star.classList.add('pinned');
-        bubble.classList.add('visible');
-        activeBubble = bubble;
-      }
+      const wasPinned = hit.classList.contains('pinned');
+      map.querySelectorAll('.gb-star.pinned').forEach(s=>s.classList.remove('pinned'));
+      map.querySelectorAll('.gb-bubble.visible').forEach(b=>b.classList.remove('visible'));
+      if(!wasPinned){ hit.classList.add('pinned'); bubble.classList.add('visible'); }
     });
 
-    map.appendChild(star);
+    map.appendChild(hit);
     map.appendChild(bubble);
   });
 
   // 点击空白关闭
-  map.addEventListener('click', ()=>{
-    map.querySelectorAll('.gb-star.pinned').forEach(s=>s.classList.remove('pinned'));
-    map.querySelectorAll('.gb-bubble.visible').forEach(b=>b.classList.remove('visible'));
-  });
+  map.onclick = e => {
+    if(e.target === map || e.target === cvs){
+      map.querySelectorAll('.gb-star.pinned').forEach(s=>s.classList.remove('pinned'));
+      map.querySelectorAll('.gb-bubble.visible').forEach(b=>b.classList.remove('visible'));
+    }
+  };
 }
 
 function escapeGb(t){
