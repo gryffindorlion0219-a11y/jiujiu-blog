@@ -701,6 +701,13 @@ body::after {
   letter-spacing: 0.02em;
 }
 
+.gb-growing-tip{
+  position:absolute;bottom:12px;right:16px;
+  font-family:'Space Grotesk',sans-serif;font-size:0.62rem;
+  color:rgba(255,255,255,0.18);letter-spacing:0.1em;
+  pointer-events:none;z-index:3;
+}
+
 .gb-star-guide {
   display: flex;
   flex-direction: column;
@@ -1763,18 +1770,34 @@ function renderGuestbook(){
     if(group.length < 2) return;
     const c = CONSTELLATIONS[month] || CONSTELLATIONS['default'];
 
-    // 连线
-    ctx.strokeStyle = 'rgba(212,160,176,0.15)';
+    // 连线：MST（Prim's），每颗星都有归属，再叠加手工定义的星座形状
+    ctx.strokeStyle = 'rgba(212,160,176,0.13)';
     ctx.lineWidth = 0.8;
     ctx.setLineDash([3,6]);
-    c.lines.forEach(([a,b])=>{
-      if(group[a] && group[b]){
-        ctx.beginPath();
-        ctx.moveTo(group[a]._x, group[a]._y);
-        ctx.lineTo(group[b]._x, group[b]._y);
-        ctx.stroke();
+    if(group.length >= 2){
+      const inTree = new Set([0]);
+      const mstEdges = [];
+      while(inTree.size < group.length){
+        let best=null, bestDist=Infinity;
+        inTree.forEach(a=>{
+          group.forEach((_,b)=>{ if(!inTree.has(b)){
+            const dist=Math.hypot(group[a]._x-group[b]._x,group[a]._y-group[b]._y);
+            if(dist<bestDist){bestDist=dist;best=[a,b];}
+          }});
+        });
+        if(!best) break;
+        mstEdges.push(best);
+        inTree.add(best[1]);
       }
-    });
+      const extraLines=c.lines||[];
+      const allEdges=[...mstEdges];
+      extraLines.forEach(([a,b])=>{
+        if(!allEdges.some(([ea,eb])=>(ea===a&&eb===b)||(ea===b&&eb===a))) allEdges.push([a,b]);
+      });
+      allEdges.forEach(([a,b])=>{ if(group[a]&&group[b]){
+        ctx.beginPath(); ctx.moveTo(group[a]._x,group[a]._y); ctx.lineTo(group[b]._x,group[b]._y); ctx.stroke();
+      }});
+    }
     ctx.setLineDash([]);
 
     // 星座名
@@ -1861,7 +1884,7 @@ function renderGuestbook(){
     const deleteBtn = isMine ? `<button class="gb-delete-btn" onclick="deleteMyEntry('${item.id}', this)">撤回这颗星</button>` : '';
     bubble.innerHTML = `
       <div class="gb-bubble-name">${escapeGb(item.from)}${myTag}</div>
-      <div class="gb-bubble-meta">${item.type||'unknown'} · ${item.time||''}</div>
+      <div class="gb-bubble-meta">${item.type||'unknown'} · ${fmtTime(item.time)}</div>
       <div class="gb-bubble-text">${escapeGb(item.text)}</div>
       ${replyHtml}
       ${deleteBtn}
@@ -1905,6 +1928,17 @@ function renderGuestbook(){
       map.querySelectorAll('.gb-bubble.visible').forEach(b=>b.classList.remove('visible'));
     }
   };
+
+  // 当月"正在生长"提示（还没命名的月份）
+  const nowMonth=new Date().toISOString().slice(0,7);
+  const nowC=CONSTELLATIONS[nowMonth];
+  const nowCount=entries.filter(e=>getMonth(e.time)===nowMonth).length;
+  if(nowCount>0&&(!nowC||!nowC.name)){
+    const tip=document.createElement('div');
+    tip.className='gb-growing-tip';
+    tip.textContent=nowMonth.slice(5)+'月的星正在生长… '+nowCount+' 颗，还未命名';
+    map.appendChild(tip);
+  }
 }
 
 function showConstellationStory(name, note, month){
@@ -1914,6 +1948,13 @@ function showConstellationStory(name, note, month){
   card.innerHTML = '<div class="cs-header"><span class="cs-name">'+name+'</span><span class="cs-month">'+month+'</span><button class="cs-close" onclick="this.closest(\'.constellation-story-card\').remove()">×</button></div><div class="cs-body">'+note.replace(/\n/g,'<br>')+'</div>';
   document.body.appendChild(card);
   setTimeout(()=>card.classList.add('visible'),10);
+}
+
+function fmtTime(t){
+  if(!t) return '';
+  const m=t.match(/(\d{4})[\\/\-](\d{1,2})[\\/\-](\d{1,2})/);
+  if(!m) return t;
+  return m[2].padStart(2,'0')+'/'+m[3].padStart(2,'0');
 }
 
 function escapeGb(t){
