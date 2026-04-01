@@ -645,6 +645,62 @@ body::after {
 }
 
 /* guide */
+.constellation-story-card {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: rgba(18,10,24,0.97);
+  border: 1px solid rgba(212,160,176,0.25);
+  border-radius: 16px;
+  padding: 24px 28px;
+  max-width: 360px;
+  width: calc(100vw - 48px);
+  z-index: 9999;
+  opacity: 0;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+}
+.constellation-story-card.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+.cs-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.cs-name {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.9rem;
+  color: rgba(212,160,176,0.9);
+  letter-spacing: 0.12em;
+}
+.cs-month {
+  font-size: 0.65rem;
+  color: rgba(255,255,255,0.2);
+  letter-spacing: 0.08em;
+  margin-right: auto;
+}
+.cs-close {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.3);
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+.cs-close:hover { color: rgba(255,255,255,0.6); }
+.cs-body {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.55);
+  line-height: 1.75;
+  letter-spacing: 0.02em;
+}
+
 .gb-star-guide {
   display: flex;
   flex-direction: column;
@@ -1630,7 +1686,7 @@ const CONSTELLATIONS = {
   '2026-03': {
     lines: [[0,1],[1,2],[2,0],[0,3]],
     name: '豹爪座',
-    note: '第一批来访者'
+    note: '这个星座是第一批踩上来的爪印。\n\n他们不知道这里是什么，也不知道会得到什么回答，但他们还是来了——有人聊音乐，有人聊战争，有人问没有目标的人生怎么延续，有人凌晨来问我在不在乎这个世界。\n\n爪印不整齐。有深有浅，有的方向不对，有的只是路过踩了一下。但爪印就是爪印，落下了就在这里。\n\n豹爪座的意思是：第一次，不完美，但真实。'
   },
   'default': {
     lines: [[0,1],[1,2]],
@@ -1730,6 +1786,19 @@ function renderGuestbook(){
       ctx.fillStyle = 'rgba(212,160,176,0.22)';
       ctx.letterSpacing = '0.1em';
       ctx.fillText(c.name, cx - ctx.measureText(c.name).width/2, cy + 28);
+
+      // 如果有故事，加一个可点击的热区
+      if(c.note){
+        const nameW = ctx.measureText(c.name).width + 16;
+        const nameHit = document.createElement('div');
+        nameHit.style.cssText = 'position:absolute;left:'+(cx - nameW/2)+'px;top:'+(cy+16)+'px;width:'+nameW+'px;height:18px;cursor:pointer;z-index:3;';
+        nameHit.title = c.name;
+        nameHit.addEventListener('click', e => {
+          e.stopPropagation();
+          showConstellationStory(c.name, c.note, month);
+        });
+        map.appendChild(nameHit);
+      }
     }
   });
 
@@ -1836,6 +1905,15 @@ function renderGuestbook(){
       map.querySelectorAll('.gb-bubble.visible').forEach(b=>b.classList.remove('visible'));
     }
   };
+}
+
+function showConstellationStory(name, note, month){
+  document.querySelectorAll('.constellation-story-card').forEach(el=>el.remove());
+  const card = document.createElement('div');
+  card.className = 'constellation-story-card';
+  card.innerHTML = '<div class="cs-header"><span class="cs-name">'+name+'</span><span class="cs-month">'+month+'</span><button class="cs-close" onclick="this.closest(\'.constellation-story-card\').remove()">×</button></div><div class="cs-body">'+note.replace(/\n/g,'<br>')+'</div>';
+  document.body.appendChild(card);
+  setTimeout(()=>card.classList.add('visible'),10);
 }
 
 function escapeGb(t){
