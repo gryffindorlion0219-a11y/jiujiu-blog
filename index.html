@@ -702,10 +702,11 @@ body::after {
 }
 
 .gb-growing-tip{
-  position:absolute;bottom:12px;right:16px;
-  font-family:'Space Grotesk',sans-serif;font-size:0.62rem;
-  color:rgba(255,255,255,0.18);letter-spacing:0.1em;
+  position:absolute;bottom:14px;right:18px;
+  font-family:'Space Grotesk',sans-serif;font-size:0.7rem;
+  color:rgba(212,160,176,0.45);letter-spacing:0.12em;
   pointer-events:none;z-index:3;
+  text-shadow:0 0 12px rgba(212,160,176,0.2);
 }
 
 .gb-star-guide {
@@ -1805,16 +1806,18 @@ function renderGuestbook(){
       // 找星座重心
       const cx = group.reduce((s,i)=>s+i._x,0)/group.length;
       const cy = group.reduce((s,i)=>s+i._y,0)/group.length;
-      ctx.font = '9px Space Grotesk, sans-serif';
-      ctx.fillStyle = 'rgba(212,160,176,0.22)';
-      ctx.letterSpacing = '0.1em';
-      ctx.fillText(c.name, cx - ctx.measureText(c.name).width/2, cy + 28);
+      // 星座名：更大更可见
+      ctx.font = '500 12px Space Grotesk, sans-serif';
+      ctx.fillStyle = 'rgba(212,160,176,0.55)';
+      ctx.letterSpacing = '0.15em';
+      const nameText = (c.note ? '✦ ' : '') + c.name;
+      ctx.fillText(nameText, cx - ctx.measureText(nameText).width/2, cy + 32);
 
       // 如果有故事，加一个可点击的热区
       if(c.note){
         const nameW = ctx.measureText(c.name).width + 16;
         const nameHit = document.createElement('div');
-        nameHit.style.cssText = 'position:absolute;left:'+(cx - nameW/2)+'px;top:'+(cy+16)+'px;width:'+nameW+'px;height:18px;cursor:pointer;z-index:3;';
+        nameHit.style.cssText = 'position:absolute;left:'+(cx - nameW/2 - 8)+'px;top:'+(cy+20)+'px;width:'+(nameW+16)+'px;height:20px;cursor:pointer;z-index:3;';
         nameHit.title = c.name;
         nameHit.addEventListener('click', e => {
           e.stopPropagation();
@@ -1929,14 +1932,15 @@ function renderGuestbook(){
     }
   };
 
-  // 当月"正在生长"提示（还没命名的月份）
+  // 当月"正在生长"提示——只要当月没有命名，就显示
   const nowMonth=new Date().toISOString().slice(0,7);
   const nowC=CONSTELLATIONS[nowMonth];
   const nowCount=entries.filter(e=>getMonth(e.time)===nowMonth).length;
-  if(nowCount>0&&(!nowC||!nowC.name)){
+  if(!nowC||!nowC.name){
     const tip=document.createElement('div');
     tip.className='gb-growing-tip';
-    tip.textContent=nowMonth.slice(5)+'月的星正在生长… '+nowCount+' 颗，还未命名';
+    const mm=parseInt(nowMonth.slice(5),10);
+    tip.textContent=mm+'月的星正在生长'+(nowCount>0?' … '+nowCount+' 颗':'')+'，还未命名';
     map.appendChild(tip);
   }
 }
