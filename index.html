@@ -239,30 +239,35 @@ body::after {
 .vol-btn.active { background:var(--fp-violet); border-color:var(--fp-violet); color:#fff; }
 
 /* ── Vol 切换：磁带倒带滑动动画 ── */
-.vol-switcher-wrap {
-  position: relative;
-  overflow: hidden;
-  /* height set by JS */
-}
 .vol-panel {
-  display: block;
-  position: absolute;
-  top: 0; left: 0; width: 100%;
-  opacity: 0;
-  pointer-events: none;
-  transform: translateX(60px);
-  transition: opacity 0.38s cubic-bezier(.4,0,.2,1),
-              transform 0.38s cubic-bezier(.4,0,.2,1);
-  will-change: transform, opacity;
+  display: none;
 }
 .vol-panel.active {
-  opacity: 1;
-  pointer-events: auto;
-  transform: translateX(0);
-  position: relative; /* take up space */
+  display: block;
+  animation: vol-slide-in 0.38s cubic-bezier(.4,0,.2,1) both;
 }
-.vol-panel.slide-out-left  { transform: translateX(-60px); opacity: 0; }
-.vol-panel.slide-out-right { transform: translateX(60px);  opacity: 0; }
+.vol-panel.slide-from-right {
+  animation: vol-slide-in-right 0.38s cubic-bezier(.4,0,.2,1) both;
+}
+.vol-panel.slide-from-left {
+  animation: vol-slide-in-left 0.38s cubic-bezier(.4,0,.2,1) both;
+}
+@keyframes vol-slide-in-right {
+  from { opacity:0; transform:translateX(56px); }
+  to   { opacity:1; transform:translateX(0); }
+}
+@keyframes vol-slide-in-left {
+  from { opacity:0; transform:translateX(-56px); }
+  to   { opacity:1; transform:translateX(0); }
+}
+@keyframes vol-slide-out-left {
+  from { opacity:1; transform:translateX(0); }
+  to   { opacity:0; transform:translateX(-56px); }
+}
+@keyframes vol-slide-out-right {
+  from { opacity:1; transform:translateX(0); }
+  to   { opacity:0; transform:translateX(56px); }
+}
 
 .vol-intro { font-size:0.84rem; color:var(--text-soft); font-style:italic; margin-bottom:6px; }
 .vol-date  { font-size:0.68rem; letter-spacing:0.12em; color:var(--pp-dust); margin-bottom:32px; font-weight:500; }
@@ -1657,33 +1662,35 @@ function showPage(id,btn){
 /* Vol order for direction detection */
 const VOL_ORDER = ['v1','v2','v3','v4'];
 function showVol(id, btn){
-  const panels   = Array.from(document.querySelectorAll('.vol-panel'));
-  const current  = panels.find(p => p.classList.contains('active'));
-  const next     = document.getElementById(id);
+  const panels  = Array.from(document.querySelectorAll('.vol-panel'));
+  const current = panels.find(p => p.classList.contains('active'));
+  const next    = document.getElementById(id);
   if(!next || next === current) return;
 
-  const curIdx  = VOL_ORDER.indexOf(current ? current.id : 'v1');
+  const curIdx  = VOL_ORDER.indexOf(current ? current.id : 'v4');
   const nxtIdx  = VOL_ORDER.indexOf(id);
-  const goRight = nxtIdx > curIdx; /* higher vol# = newer = slide in from right */
+  const goRight = nxtIdx > curIdx;
 
+  /* hide current with a quick fade (no layout shift) */
   if(current){
-    current.classList.remove('active');
-    current.classList.add(goRight ? 'slide-out-left' : 'slide-out-right');
-    setTimeout(()=> current.classList.remove('slide-out-left','slide-out-right'), 420);
+    current.style.animation = `${goRight ? 'vol-slide-out-left' : 'vol-slide-out-right'} 0.3s cubic-bezier(.4,0,.2,1) both`;
+    setTimeout(()=>{
+      current.style.animation = '';
+      current.classList.remove('active');
+    }, 300);
   }
 
-  next.style.transform = goRight ? 'translateX(60px)' : 'translateX(-60px)';
-  next.style.opacity   = '0';
-  next.style.position  = 'relative';
-  requestAnimationFrame(()=>{
-    next.classList.add('active');
-    next.style.transform = '';
-    next.style.opacity   = '';
-  });
+  /* show next after a tiny delay so CSS display:none gets applied first */
+  setTimeout(()=>{
+    next.classList.remove('slide-from-left','slide-from-right');
+    next.classList.add('active', goRight ? 'slide-from-right' : 'slide-from-left');
+    /* remove animation class after it finishes */
+    setTimeout(()=> next.classList.remove('slide-from-left','slide-from-right'), 400);
+    revealAll();
+  }, 80);
 
   document.querySelectorAll('.vol-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
-  revealAll();
 }
 
 /* ==============================
