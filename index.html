@@ -25,12 +25,12 @@
   --tw-bone:    #1E1810;
   --tw-shadow:  #F0D8B0;
 
-  /* base — deeper, more dramatic */
-  --bg:         #0E0B14;
-  --text:       #F0EAF5;
-  --text-mid:   #C8B8D0;
-  --text-soft:  #7A6880;
-  --rule:       rgba(200,148,160,0.15);
+  /* base — lifted brightness */
+  --bg:         #131020;
+  --text:       #F5F0FA;
+  --text-mid:   #D8CAE0;
+  --text-soft:  #9A8AA8;
+  --rule:       rgba(200,148,160,0.2);
 }
 
 * { margin:0; padding:0; box-sizing:border-box; }
@@ -2352,25 +2352,25 @@ loadGuestbook();
 .chess-coords-rank {
   display:flex; flex-direction:column;
   justify-content:space-around;
-  padding:0 6px 0 0;
-  height: calc(min(72vw, 440px));
-  font-size:0.62rem; color:var(--text-soft);
+  padding:0 8px 0 0;
+  height: min(80vw, 520px);
+  font-size:0.68rem; color:var(--text-soft);
   letter-spacing:0.05em;
 }
 .chess-board-col { display:flex; flex-direction:column; }
 .chess-board {
   display:grid;
   grid-template-columns: repeat(8,1fr);
-  width: min(72vw, 440px);
-  height: min(72vw, 440px);
-  border:1px solid rgba(255,255,255,0.08);
+  width: min(80vw, 520px);
+  height: min(80vw, 520px);
+  border:1px solid rgba(255,255,255,0.12);
   position:relative;
 }
 .chess-coords-file {
   display:flex; justify-content:space-around;
-  padding:4px 0 0;
-  width: min(72vw, 440px);
-  font-size:0.62rem; color:var(--text-soft);
+  padding:5px 0 0;
+  width: min(80vw, 520px);
+  font-size:0.68rem; color:var(--text-soft);
   letter-spacing:0.05em;
 }
 .chess-cell {
@@ -2378,8 +2378,8 @@ loadGuestbook();
   display:flex; align-items:center; justify-content:center;
   transition: background 0.12s;
 }
-.chess-cell.light { background:#2A2238; }
-.chess-cell.dark  { background:#1A1428; }
+.chess-cell.light { background:#342848; }
+.chess-cell.dark  { background:#1E1830; }
 .chess-cell.highlight { background:rgba(107,78,140,0.45) !important; }
 .chess-cell.selected  { background:rgba(212,160,176,0.3) !important; }
 .chess-cell.hint-move { background:rgba(155,106,172,0.25) !important; }
@@ -2400,7 +2400,7 @@ loadGuestbook();
 
 /* 棋子 SVG 文字渲染 */
 .chess-piece {
-  font-size: calc(min(72vw,440px) / 8 * 0.72);
+  font-size: calc(min(80vw,520px) / 8 * 0.74);
   line-height:1;
   pointer-events:none;
   transition: transform 0.15s ease;
@@ -2552,11 +2552,13 @@ const PUZZLES = [
 
 /* ── 状态 ── */
 let curPuzzle  = 0;
-let selected   = null;   /* 当前选中格子 index */
+let selected   = null;
 let attempts   = 0;
 let solved     = false;
 let revealed   = false;
-const results  = [];     /* 每题结果 'solved'|'revealed'|null */
+const results  = [];
+/* 当前题的 board 工作副本（避免污染 PUZZLES 原始数据） */
+let curBoard   = [];
 
 /* ── 工具函数 ── */
 function idx2rc(i){ return { r: Math.floor(i/8), c: i%8 }; }
@@ -2578,15 +2580,16 @@ function renderProgress(){
 
 /* ── 渲染棋盘 ── */
 function renderBoard(){
-  const p     = PUZZLES[curPuzzle];
-  const board = document.getElementById('chess-board');
-  const rankEl= document.getElementById('chess-coords-rank');
-  const fileEl= document.getElementById('chess-coords-file');
-  board.innerHTML=''; rankEl.innerHTML=''; fileEl.innerHTML='';
+  const p      = PUZZLES[curPuzzle];
+  curBoard     = [...p.board];   /* 深拷贝，保护原始数据 */
+  const boardEl= document.getElementById('chess-board');
+  const rankEl = document.getElementById('chess-coords-rank');
+  const fileEl = document.getElementById('chess-coords-file');
+  boardEl.innerHTML=''; rankEl.innerHTML=''; fileEl.innerHTML='';
 
   /* 故事 */
-  const storyEl=document.getElementById('chess-story');
-  storyEl.innerHTML=`<strong>${p.title}</strong><br><br>${p.story}`;
+  document.getElementById('chess-story').innerHTML=
+    `<strong>${p.title}</strong><br><br>${p.story}`;
 
   /* 坐标轴 */
   for(let r=0;r<8;r++){
@@ -2599,20 +2602,19 @@ function renderBoard(){
   }
 
   /* 格子 */
-  p.board.forEach((piece,i)=>{
+  curBoard.forEach((piece,i)=>{
     const {r,c}=idx2rc(i);
     const cell=document.createElement('div');
     cell.className='chess-cell '+((r+c)%2===0?'light':'dark');
     cell.dataset.idx=i;
     if(piece){
       const span=document.createElement('span');
-      const isWhite=piece.startsWith('w');
-      span.className='chess-piece '+(isWhite?'white':'black');
+      span.className='chess-piece '+(piece.startsWith('w')?'white':'black');
       span.textContent=PIECES[piece];
       cell.appendChild(span);
     }
     cell.addEventListener('click',()=>onCellClick(i));
-    board.appendChild(cell);
+    boardEl.appendChild(cell);
   });
 }
 
@@ -2678,17 +2680,16 @@ function checkMove([from,to]){
 function onCorrect(){
   solved=true;
   results[curPuzzle]='solved';
-  /* 动画：棋子移到目标格 */
   const p=PUZZLES[curPuzzle];
   const [sf,st]=p.solution;
   const cells=document.querySelectorAll('.chess-cell');
-  const piece=p.board[sf];
-  p.board[st]=piece; p.board[sf]=null;
+  const piece=curBoard[sf];
+  /* 更新工作副本，不碰原始数据 */
+  curBoard[st]=piece; curBoard[sf]=null;
   cells[sf].innerHTML='';
   cells[st].innerHTML='';
   const span=document.createElement('span');
-  const isW=piece.startsWith('w');
-  span.className='chess-piece '+(isW?'white':'black');
+  span.className='chess-piece '+(piece.startsWith('w')?'white':'black');
   span.textContent=PIECES[piece];
   cells[st].appendChild(span);
   cells[st].classList.add('highlight');
@@ -2696,7 +2697,6 @@ function onCorrect(){
   const statusEl=document.getElementById('chess-status');
   statusEl.className='chess-status correct';
   statusEl.innerHTML=`✦ <strong>${p.solutionLabel}</strong> — 将死。`;
-
   fireParticles(cells[st]);
 
   document.getElementById('chess-reveal').style.display='none';
@@ -2748,25 +2748,27 @@ function chessReveal(){
   }
 }
 
-function chessNext(){
-  curPuzzle++;
+function resetUI(){
   selected=null; attempts=0; solved=false; revealed=false;
   document.getElementById('chess-next').style.display='none';
+  document.getElementById('chess-restart').style.display='none';
   document.getElementById('chess-reveal').style.display='';
-  document.getElementById('chess-status').className='chess-status';
-  document.getElementById('chess-hint').textContent='点击白方棋子，再点击目标格';
+  const st=document.getElementById('chess-status');
+  st.className='chess-status';
+  st.innerHTML='<span>点击白方棋子，再点击目标格</span>';
+}
+
+function chessNext(){
+  curPuzzle++;
+  resetUI();
   renderProgress();
   renderBoard();
 }
 
 function chessRestart(){
-  curPuzzle=0; selected=null; attempts=0; solved=false; revealed=false;
+  curPuzzle=0;
   results.length=0;
-  document.getElementById('chess-restart').style.display='none';
-  document.getElementById('chess-next').style.display='none';
-  document.getElementById('chess-reveal').style.display='';
-  document.getElementById('chess-status').className='chess-status';
-  document.getElementById('chess-hint').textContent='点击白方棋子，再点击目标格';
+  resetUI();
   renderProgress();
   renderBoard();
 }
