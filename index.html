@@ -2483,18 +2483,29 @@ const PUZZLES = [
   },
   {
     title: '永恒将死',
-    story: '这是国际象棋史上最早被记录的"窒息将死"之一。黑王被自己的棋子围死，白方一步走完所有故事。<strong>窒息将死</strong>（Smothered Mate）——最优雅的终结方式。',
+    story: '这是国际象棋史上最美的将死之一——<strong>窒息将死</strong>（Smothered Mate）。黑王困在角落，被自己的车和兵团团围死，动弹不得。白马只需一跳，全局结束。找到那一步。',
+    /*
+      棋盘布局 (index 0=a8左上，白方在下):
+      rank8: . . . . . . bK .      ← 黑王在g8(index6)
+      rank7: . . . . . bR bP bP   ← bR在f7(13)，bP在g7(14),h7(15) 把黑王围死
+      rank6: . . . . wN . . .     ← 白马在e6(20)，可跳f8
+      rank5: . . . . . . . .
+      rank4: . . . . . . . .
+      rank3: . . . . . . . .
+      rank2: . . . . . . . .
+      rank1: . . . . wK . . .
+    */
     board: [
-      'bR',  'bB',  'bQ',  null, 'bK',  null,  null, 'bR',
-      'bP',  'bP',  'bP',  null,  null, 'bP', 'bP', 'bP',
+      null,  null,  null,  null,  null,  null, 'bK',  null,
+      null,  null,  null,  null,  null, 'bR', 'bP', 'bP',
+      null,  null,  null,  null, 'wN',  null,  null,  null,
       null,  null,  null,  null,  null,  null,  null,  null,
-      null,  null,  null, 'bP',  null,  null,  null,  null,
       null,  null,  null,  null,  null,  null,  null,  null,
-      null,  null, 'wN',  null,  null,  null,  null,  null,
-      'wP',  'wP',  'wP',  null,  null, 'wP', 'wP', 'wP',
-      'wR',  null,  null,  null, 'wK',  null,  null, 'wR',
+      null,  null,  null,  null,  null,  null,  null,  null,
+      null,  null,  null,  null,  null,  null,  null,  null,
+      null,  null,  null,  null, 'wK',  null,  null,  null,
     ],
-    solution: [42, 5],   /* Nc3->f8# smothered */
+    solution: [20, 5],   /* Ne6->f8# smothered mate */
     solutionLabel: 'Nf8#',
     wrongShake: true,
   },
@@ -2534,18 +2545,22 @@ const PUZZLES = [
   },
   {
     title: '马的悖论',
-    story: '马是国际象棋里最反直觉的棋子。它走"日"字，可以跳过障碍，威胁对方永远摸不准节奏。<strong>Magnus Carlsen</strong> 曾说：马是最难评估的棋子，因为它的力量在局部而不在全局。这道题，马只需一跳。',
+    story: '马是国际象棋里最反直觉的棋子。它走"日"字，跳过一切障碍，威胁永远摸不准。<strong>Magnus Carlsen</strong> 说：马的力量在局部而不在全局。这道题，黑王在角落，马只需一跳。找那个格子。',
+    /*
+      白马在g6(22)，跳到f8(5)将死困在h8角落的黑王
+      黑王h8(7)，被bP在g7(14)封死，bR在h7(15)封死
+    */
     board: [
-      null,  null,  null,  null, 'bK',  null,  null,  null,
-      null,  null, 'bP',  null,  null, 'bP',  null,  null,
+      null,  null,  null,  null,  null,  null,  null, 'bK',
+      null,  null,  null,  null,  null,  null, 'bP', 'bR',
+      null,  null,  null,  null,  null,  null, 'wN',  null,
       null,  null,  null,  null,  null,  null,  null,  null,
       null,  null,  null,  null,  null,  null,  null,  null,
       null,  null,  null,  null,  null,  null,  null,  null,
-      null,  null,  null, 'wN',  null,  null,  null,  null,
       null,  null,  null,  null,  null,  null,  null,  null,
       null,  null,  null,  null, 'wK',  null,  null,  null,
     ],
-    solution: [43, 5],   /* Nd3->f8# wait — Nd3 is index 43 → f8 index 5 */
+    solution: [22, 5],   /* Ng6->f8# */
     solutionLabel: 'Nf8#',
     wrongShake: true,
   },
@@ -2748,15 +2763,18 @@ function chessReveal(){
   if(cells[sf]) cells[sf].classList.add('highlight');
   if(cells[st]) cells[st].classList.add('highlight');
 
-  /* 把棋子画到目标格 */
-  const piece=curBoard[sf];
-  if(piece && cells[st]){
-    cells[st].innerHTML='';
-    const span=document.createElement('span');
-    span.className='chess-piece '+(piece.startsWith('w')?'white':'black');
-    span.textContent=PIECES[piece];
-    cells[st].appendChild(span);
-    if(cells[sf]) cells[sf].innerHTML='';
+  /* 把棋子画到目标格 — 从原始数据取，不依赖 curBoard 状态 */
+  const piece = PUZZLES[curPuzzle].board[sf];
+  if(piece){
+    if(cells[sf]) { cells[sf].innerHTML=''; cells[sf].style.background='rgba(212,160,176,0.15)'; }
+    if(cells[st]) {
+      cells[st].innerHTML='';
+      cells[st].style.background='rgba(130,201,154,0.25)';
+      const span=document.createElement('span');
+      span.className='chess-piece '+(piece.startsWith('w')?'white':'black');
+      span.textContent=PIECES[piece];
+      cells[st].appendChild(span);
+    }
   }
 
   const statusEl=document.getElementById('chess-status');
