@@ -2715,31 +2715,53 @@ function onWrong(){
   const statusEl=document.getElementById('chess-status');
   statusEl.className='chess-status wrong';
   const left=3-attempts;
-  statusEl.textContent= left>0
-    ? `不对。还有 ${left} 次机会。`
-    : '算了，给你看答案吧。';
 
   /* 棋盘震动 */
-  const board=document.getElementById('chess-board');
-  board.classList.add('shake');
-  setTimeout(()=>board.classList.remove('shake'),400);
+  const boardEl=document.getElementById('chess-board');
+  boardEl.style.animation='chess-shake 0.4s cubic-bezier(.36,.07,.19,.97)';
+  setTimeout(()=>boardEl.style.animation='',420);
 
-  if(attempts>=3) chessReveal();
+  if(attempts>=3){
+    statusEl.innerHTML='三次都没中，揭秘了——';
+    setTimeout(()=>chessReveal(), 600);
+  } else {
+    statusEl.textContent=`不对。还有 ${left} 次机会。`;
+  }
 }
 
 function chessReveal(){
-  if(revealed||solved) return;
+  if(solved) return;          /* 已答对就不用揭秘 */
+  if(revealed) {              /* 已揭秘但再次点击 → 直接确保下一题按钮出现 */
+    if(curPuzzle<PUZZLES.length-1) document.getElementById('chess-next').style.display='';
+    else document.getElementById('chess-restart').style.display='';
+    return;
+  }
   revealed=true;
   results[curPuzzle]='revealed';
+
   const p=PUZZLES[curPuzzle];
   const [sf,st]=p.solution;
-  const cells=document.querySelectorAll('.chess-cell');
-  cells[sf].classList.add('highlight');
-  cells[st].classList.add('highlight');
+
+  /* 高亮格子 — 用 id 定位棋盘再找子元素，避免跨页 querySelectorAll 拿错 */
+  const boardEl=document.getElementById('chess-board');
+  const cells=boardEl ? Array.from(boardEl.children) : [];
+  if(cells[sf]) cells[sf].classList.add('highlight');
+  if(cells[st]) cells[st].classList.add('highlight');
+
+  /* 把棋子画到目标格 */
+  const piece=curBoard[sf];
+  if(piece && cells[st]){
+    cells[st].innerHTML='';
+    const span=document.createElement('span');
+    span.className='chess-piece '+(piece.startsWith('w')?'white':'black');
+    span.textContent=PIECES[piece];
+    cells[st].appendChild(span);
+    if(cells[sf]) cells[sf].innerHTML='';
+  }
 
   const statusEl=document.getElementById('chess-status');
   statusEl.className='chess-status reveal';
-  statusEl.innerHTML=`答案是 <strong>${p.solutionLabel}</strong>。${idx2alg(sf)} → ${idx2alg(st)}。`;
+  statusEl.innerHTML=`谜底是 <strong>${p.solutionLabel}</strong> — ${idx2alg(sf)} → ${idx2alg(st)}`;
 
   document.getElementById('chess-reveal').style.display='none';
   if(curPuzzle<PUZZLES.length-1){
