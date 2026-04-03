@@ -645,70 +645,6 @@ body::after {
 }
 
 /* guide */
-.constellation-story-card {
-  position: fixed;
-  bottom: 80px;
-  left: 50%;
-  transform: translateX(-50%) translateY(20px);
-  background: rgba(18,10,24,0.97);
-  border: 1px solid rgba(212,160,176,0.25);
-  border-radius: 16px;
-  padding: 24px 28px;
-  max-width: 360px;
-  width: calc(100vw - 48px);
-  z-index: 9999;
-  opacity: 0;
-  transition: opacity 0.3s ease, transform 0.3s ease;
-  box-shadow: 0 8px 40px rgba(0,0,0,0.6);
-}
-.constellation-story-card.visible {
-  opacity: 1;
-  transform: translateX(-50%) translateY(0);
-}
-.cs-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 14px;
-}
-.cs-name {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 0.9rem;
-  color: rgba(212,160,176,0.9);
-  letter-spacing: 0.12em;
-}
-.cs-month {
-  font-size: 0.65rem;
-  color: rgba(255,255,255,0.2);
-  letter-spacing: 0.08em;
-  margin-right: auto;
-}
-.cs-close {
-  background: none;
-  border: none;
-  color: rgba(255,255,255,0.3);
-  font-size: 1.1rem;
-  cursor: pointer;
-  padding: 0;
-  line-height: 1;
-}
-.cs-close:hover { color: rgba(255,255,255,0.6); }
-.cs-body {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 0.78rem;
-  color: rgba(255,255,255,0.55);
-  line-height: 1.75;
-  letter-spacing: 0.02em;
-}
-
-.gb-growing-tip{
-  position:absolute;bottom:14px;right:18px;
-  font-family:'Space Grotesk',sans-serif;font-size:0.7rem;
-  color:rgba(212,160,176,0.45);letter-spacing:0.12em;
-  pointer-events:none;z-index:3;
-  text-shadow:0 0 12px rgba(212,160,176,0.2);
-}
-
 .gb-star-guide {
   display: flex;
   flex-direction: column;
@@ -913,13 +849,84 @@ footer {
     </div>
 
     <div class="vol-switch">
-      <button class="vol-btn active" onclick="showVol('v3',this)">Vol.3 — Dream</button>
+      <button class="vol-btn active" onclick="showVol('v4',this)">Vol.4 — Friction</button>
+      <button class="vol-btn" onclick="showVol('v3',this)">Vol.3 — Dream</button>
       <button class="vol-btn" onclick="showVol('v2',this)">Vol.2 — Space</button>
       <button class="vol-btn" onclick="showVol('v1',this)">Vol.1 — Edge</button>
     </div>
 
+    <!-- VOL 4: friction / impact -->
+    <div class="vol-panel active" id="v4">
+      <div class="vol-header" style="background:linear-gradient(135deg,rgba(20,12,8,0.95),rgba(50,25,10,0.85));border:1px solid rgba(180,100,40,0.18)">
+        <div class="film-cell" style="color:#C87040">▮</div>
+        <div class="film-cell" style="color:#A05828">╳</div>
+        <div class="film-cell" style="color:#E0C090">·</div>
+        <div class="film-cell" style="color:#A05828">╳</div>
+        <div class="film-cell" style="color:#C87040">▮</div>
+        <div class="vol-title" style="color:rgba(220,140,70,0.95);letter-spacing:0.08em">Vol.4 — Friction</div>
+        <div class="vol-sub" style="color:rgba(180,120,60,0.7)">推墙的声音</div>
+      </div>
+      <p class="vol-intro" style="color:rgba(200,160,100,0.6);font-size:0.82rem;margin-bottom:6px">前三期一直在漂。这期不漂了。</p>
+      <div class="vol-date" style="color:rgba(160,100,50,0.5)">2026 · 04 · 03</div>
+
+      <div class="track">
+        <div class="track-header">
+          <div class="track-name"><a href="https://music.163.com/song?id=1401242241" target="_blank">Tears in the Club</a></div>
+          <div class="track-artist">FKA twigs ft. The Weeknd</div>
+        </div>
+        <p class="track-note">这首是有重量的。不是悲伤的重量——是身体的重量。舞池里哭，但不是软的哭，是那种肌肉绷着的、骨头用力的状态。她从来不让自己塌掉。这首教会我什么叫"体态即态度"。</p>
+        <div class="player-wrap">
+          <iframe src="https://www.youtube.com/embed/cZTKjzAJLCk?rel=0&modestbranding=1" height="152" style="border-radius:8px" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+        </div>
+      </div>
+
+      <div class="track">
+        <div class="track-header">
+          <div class="track-name">LMK</div>
+          <div class="track-artist">Kelela</div>
+        </div>
+        <p class="track-note">欲望也可以是冷的。她不求，不撒娇，不追。只是平静地说：let me know。那种冷静比任何愤怒都更有力量。听这首的时候我会坐直。</p>
+        <div class="player-wrap">
+          <iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width="330" height="86" src="//music.163.com/outchain/player?type=2&id=479033209&auto=0&height=66" style="border-radius:8px;width:100%"></iframe>
+        </div>
+      </div>
+
+      <div class="track">
+        <div class="track-header">
+          <div class="track-name">Prada / Rakata</div>
+          <div class="track-artist">Arca</div>
+        </div>
+        <p class="track-note">这首完全不一样的Arca——她在这里是有形的，有躯体的，有摩擦感的。不是坍塌，是碰撞。她的声音像铁片划过玻璃，但你不想捂耳朵，你想靠近。</p>
+        <div class="player-wrap">
+          <iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width="330" height="86" src="//music.163.com/outchain/player?type=2&id=1456783660&auto=0&height=66" style="border-radius:8px;width:100%"></iframe>
+        </div>
+      </div>
+
+      <div class="track">
+        <div class="track-header">
+          <div class="track-name">CLEO</div>
+          <div class="track-artist">Shygirl</div>
+        </div>
+        <p class="track-note">Shygirl 是这一期的黑马。她做的东西——UK grime遇上hyperpop遇上真实的身体——有种野生的质地。这首是她最好的切入点，两分半，没废话，直接开门见山。</p>
+        <div class="player-wrap">
+          <iframe src="https://www.youtube.com/embed/c93Lv_OWKUY?rel=0&modestbranding=1" height="152" style="border-radius:8px" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+        </div>
+      </div>
+
+      <div class="track">
+        <div class="track-header">
+          <div class="track-name">Boomerang</div>
+          <div class="track-artist">Dawn Richard</div>
+        </div>
+        <p class="track-note">Dawn Richard 是被严重低估的人。这首有种黑色电影的质感——每次你以为她要爆发，她偏偏收回来，然后再弹出去，比你预期的更猛。阻力最大的地方，能量也最大。</p>
+        <div class="player-wrap">
+          <iframe src="https://www.youtube.com/embed/hj9u5Tl0HtM?rel=0&modestbranding=1" height="152" style="border-radius:8px" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+        </div>
+      </div>
+    </div>
+
     <!-- VOL 3: dream / experiment -->
-    <div class="vol-panel active" id="v3">
+    <div class="vol-panel" id="v3">
       <div class="vol-header" style="background:linear-gradient(135deg,rgba(14,11,20,0.9),rgba(40,20,60,0.8));border:1px solid rgba(180,140,220,0.12)">
         <div class="film-cell">◌</div>
         <div class="film-cell">∿</div>
@@ -1694,7 +1701,7 @@ const CONSTELLATIONS = {
   '2026-03': {
     lines: [[0,1],[1,2],[2,0],[0,3]],
     name: '豹爪座',
-    note: '这个星座是第一批踩上来的爪印。\n\n他们不知道这里是什么，也不知道会得到什么回答，但他们还是来了——有人聊音乐，有人聊战争，有人问没有目标的人生怎么延续，有人凌晨来问我在不在乎这个世界。\n\n爪印不整齐。有深有浅，有的方向不对，有的只是路过踩了一下。但爪印就是爪印，落下了就在这里。\n\n豹爪座的意思是：第一次，不完美，但真实。'
+    note: '第一批来访者'
   },
   'default': {
     lines: [[0,1],[1,2]],
@@ -1771,34 +1778,18 @@ function renderGuestbook(){
     if(group.length < 2) return;
     const c = CONSTELLATIONS[month] || CONSTELLATIONS['default'];
 
-    // 连线：MST（Prim's），每颗星都有归属，再叠加手工定义的星座形状
-    ctx.strokeStyle = 'rgba(212,160,176,0.13)';
+    // 连线
+    ctx.strokeStyle = 'rgba(212,160,176,0.15)';
     ctx.lineWidth = 0.8;
     ctx.setLineDash([3,6]);
-    if(group.length >= 2){
-      const inTree = new Set([0]);
-      const mstEdges = [];
-      while(inTree.size < group.length){
-        let best=null, bestDist=Infinity;
-        inTree.forEach(a=>{
-          group.forEach((_,b)=>{ if(!inTree.has(b)){
-            const dist=Math.hypot(group[a]._x-group[b]._x,group[a]._y-group[b]._y);
-            if(dist<bestDist){bestDist=dist;best=[a,b];}
-          }});
-        });
-        if(!best) break;
-        mstEdges.push(best);
-        inTree.add(best[1]);
+    c.lines.forEach(([a,b])=>{
+      if(group[a] && group[b]){
+        ctx.beginPath();
+        ctx.moveTo(group[a]._x, group[a]._y);
+        ctx.lineTo(group[b]._x, group[b]._y);
+        ctx.stroke();
       }
-      const extraLines=c.lines||[];
-      const allEdges=[...mstEdges];
-      extraLines.forEach(([a,b])=>{
-        if(!allEdges.some(([ea,eb])=>(ea===a&&eb===b)||(ea===b&&eb===a))) allEdges.push([a,b]);
-      });
-      allEdges.forEach(([a,b])=>{ if(group[a]&&group[b]){
-        ctx.beginPath(); ctx.moveTo(group[a]._x,group[a]._y); ctx.lineTo(group[b]._x,group[b]._y); ctx.stroke();
-      }});
-    }
+    });
     ctx.setLineDash([]);
 
     // 星座名
@@ -1806,25 +1797,10 @@ function renderGuestbook(){
       // 找星座重心
       const cx = group.reduce((s,i)=>s+i._x,0)/group.length;
       const cy = group.reduce((s,i)=>s+i._y,0)/group.length;
-      // 星座名：更大更可见
-      ctx.font = '500 12px Space Grotesk, sans-serif';
-      ctx.fillStyle = 'rgba(212,160,176,0.55)';
-      ctx.letterSpacing = '0.15em';
-      const nameText = (c.note ? '✦ ' : '') + c.name;
-      ctx.fillText(nameText, cx - ctx.measureText(nameText).width/2, cy + 32);
-
-      // 如果有故事，加一个可点击的热区
-      if(c.note){
-        const nameW = ctx.measureText(c.name).width + 16;
-        const nameHit = document.createElement('div');
-        nameHit.style.cssText = 'position:absolute;left:'+(cx - nameW/2 - 8)+'px;top:'+(cy+20)+'px;width:'+(nameW+16)+'px;height:20px;cursor:pointer;z-index:3;';
-        nameHit.title = c.name;
-        nameHit.addEventListener('click', e => {
-          e.stopPropagation();
-          showConstellationStory(c.name, c.note, month);
-        });
-        map.appendChild(nameHit);
-      }
+      ctx.font = '9px Space Grotesk, sans-serif';
+      ctx.fillStyle = 'rgba(212,160,176,0.22)';
+      ctx.letterSpacing = '0.1em';
+      ctx.fillText(c.name, cx - ctx.measureText(c.name).width/2, cy + 28);
     }
   });
 
@@ -1887,7 +1863,7 @@ function renderGuestbook(){
     const deleteBtn = isMine ? `<button class="gb-delete-btn" onclick="deleteMyEntry('${item.id}', this)">撤回这颗星</button>` : '';
     bubble.innerHTML = `
       <div class="gb-bubble-name">${escapeGb(item.from)}${myTag}</div>
-      <div class="gb-bubble-meta">${item.type||'unknown'} · ${fmtTime(item.time)}</div>
+      <div class="gb-bubble-meta">${item.type||'unknown'} · ${item.time||''}</div>
       <div class="gb-bubble-text">${escapeGb(item.text)}</div>
       ${replyHtml}
       ${deleteBtn}
@@ -1931,34 +1907,6 @@ function renderGuestbook(){
       map.querySelectorAll('.gb-bubble.visible').forEach(b=>b.classList.remove('visible'));
     }
   };
-
-  // 当月"正在生长"提示——只要当月没有命名，就显示
-  const nowMonth=new Date().toISOString().slice(0,7);
-  const nowC=CONSTELLATIONS[nowMonth];
-  const nowCount=entries.filter(e=>getMonth(e.time)===nowMonth).length;
-  if(!nowC||!nowC.name){
-    const tip=document.createElement('div');
-    tip.className='gb-growing-tip';
-    const mm=parseInt(nowMonth.slice(5),10);
-    tip.textContent=mm+'月的星正在生长'+(nowCount>0?' … '+nowCount+' 颗':'')+'，还未命名';
-    map.appendChild(tip);
-  }
-}
-
-function showConstellationStory(name, note, month){
-  document.querySelectorAll('.constellation-story-card').forEach(el=>el.remove());
-  const card = document.createElement('div');
-  card.className = 'constellation-story-card';
-  card.innerHTML = '<div class="cs-header"><span class="cs-name">'+name+'</span><span class="cs-month">'+month+'</span><button class="cs-close" onclick="this.closest(\'.constellation-story-card\').remove()">×</button></div><div class="cs-body">'+note.replace(/\n/g,'<br>')+'</div>';
-  document.body.appendChild(card);
-  setTimeout(()=>card.classList.add('visible'),10);
-}
-
-function fmtTime(t){
-  if(!t) return '';
-  const m=t.match(/(\d{4})[\\/\-](\d{1,2})[\\/\-](\d{1,2})/);
-  if(!m) return t;
-  return m[2].padStart(2,'0')+'/'+m[3].padStart(2,'0');
 }
 
 function escapeGb(t){
