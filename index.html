@@ -973,6 +973,7 @@ footer {
       <button class="nav-tab" onclick="showPage('thinking',this)">Thinking</button>
       <button class="nav-tab" onclick="showPage('guestbook',this)">Guestbook</button>
       <button class="nav-tab" onclick="showPage('about',this)">About</button>
+      <button class="nav-tab" onclick="showPage('play',this)">Play ♟</button>
     </div>
   </nav>
 
@@ -2274,5 +2275,544 @@ loadGuestbook();
     </div>
   </div>
 
+  <!-- ===== PLAY ===== -->
+  <div class="page" id="play">
+    <div class="sec-head">
+      <div class="sec-tag">Endgame</div>
+      <h2 class="sec-title">残局谜题</h2>
+      <p class="sec-note">白方先行，一步将死。棋盘会告诉你对不对。</p>
+    </div>
+
+    <!-- 题目进度 -->
+    <div class="chess-progress" id="chess-progress">
+      <span class="cp-dots" id="cp-dots"></span>
+      <span class="cp-label" id="cp-label">题 1 / 5</span>
+    </div>
+
+    <!-- 谜题故事 -->
+    <div class="chess-story" id="chess-story"></div>
+
+    <!-- 棋盘 -->
+    <div class="chess-wrap">
+      <div class="chess-coords-rank" id="chess-coords-rank"></div>
+      <div class="chess-board-col">
+        <div class="chess-board" id="chess-board"></div>
+        <div class="chess-coords-file" id="chess-coords-file"></div>
+      </div>
+    </div>
+
+    <!-- 状态提示 -->
+    <div class="chess-status" id="chess-status">
+      <span id="chess-hint">点击白方棋子，再点击目标格</span>
+    </div>
+
+    <!-- 按钮 -->
+    <div class="chess-actions">
+      <button class="chess-btn" id="chess-reveal" onclick="chessReveal()">显示答案</button>
+      <button class="chess-btn primary" id="chess-next" onclick="chessNext()" style="display:none">下一题 →</button>
+      <button class="chess-btn primary" id="chess-restart" onclick="chessRestart()" style="display:none">重新开始 ♟</button>
+    </div>
+  </div>
+
 </body>
+
+<style>
+/* ============================================================
+   CHESS — 残局谜题
+   ============================================================ */
+.chess-progress {
+  display:flex; align-items:center; gap:12px;
+  margin-bottom:20px;
+}
+.cp-dots { display:flex; gap:6px; }
+.cp-dot {
+  width:8px; height:8px; border-radius:50%;
+  background: rgba(255,255,255,0.1);
+  border:1px solid rgba(255,255,255,0.12);
+  transition: background 0.3s, border-color 0.3s;
+}
+.cp-dot.done  { background:var(--fp-violet); border-color:var(--fp-violet); }
+.cp-dot.current { background:var(--pp-pink); border-color:var(--pp-pink); }
+.cp-label { font-size:0.65rem; letter-spacing:0.15em; color:var(--text-soft); }
+
+.chess-story {
+  font-size:0.86rem; color:var(--text-mid); line-height:1.75;
+  margin-bottom:24px; padding:20px 22px;
+  background: rgba(26,20,40,0.5);
+  border-left:2px solid var(--fp-violet);
+  font-style:italic;
+}
+.chess-story strong { color:var(--fp-star); font-style:normal; }
+
+.chess-wrap {
+  display:flex; gap:0; align-items:flex-start;
+  margin-bottom:16px;
+  user-select:none;
+}
+.chess-coords-rank {
+  display:flex; flex-direction:column;
+  justify-content:space-around;
+  padding:0 6px 0 0;
+  height: calc(min(72vw, 440px));
+  font-size:0.62rem; color:var(--text-soft);
+  letter-spacing:0.05em;
+}
+.chess-board-col { display:flex; flex-direction:column; }
+.chess-board {
+  display:grid;
+  grid-template-columns: repeat(8,1fr);
+  width: min(72vw, 440px);
+  height: min(72vw, 440px);
+  border:1px solid rgba(255,255,255,0.08);
+  position:relative;
+}
+.chess-coords-file {
+  display:flex; justify-content:space-around;
+  padding:4px 0 0;
+  width: min(72vw, 440px);
+  font-size:0.62rem; color:var(--text-soft);
+  letter-spacing:0.05em;
+}
+.chess-cell {
+  position:relative; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  transition: background 0.12s;
+}
+.chess-cell.light { background:#2A2238; }
+.chess-cell.dark  { background:#1A1428; }
+.chess-cell.highlight { background:rgba(107,78,140,0.45) !important; }
+.chess-cell.selected  { background:rgba(212,160,176,0.3) !important; }
+.chess-cell.hint-move { background:rgba(155,106,172,0.25) !important; }
+.chess-cell.hint-move::after {
+  content:''; position:absolute;
+  width:30%; height:30%; border-radius:50%;
+  background:rgba(155,106,172,0.5);
+}
+.chess-cell.shake {
+  animation: chess-shake 0.4s cubic-bezier(.36,.07,.19,.97);
+}
+@keyframes chess-shake {
+  10%,90%  { transform:translateX(-2px); }
+  20%,80%  { transform:translateX(3px); }
+  30%,50%,70% { transform:translateX(-3px); }
+  40%,60%  { transform:translateX(3px); }
+}
+
+/* 棋子 SVG 文字渲染 */
+.chess-piece {
+  font-size: calc(min(72vw,440px) / 8 * 0.72);
+  line-height:1;
+  pointer-events:none;
+  transition: transform 0.15s ease;
+  filter: drop-shadow(0 1px 3px rgba(0,0,0,0.6));
+}
+.chess-piece.white { color:#F0EAF5; }
+.chess-piece.black { color:#6B4E8C; }
+.chess-cell:hover .chess-piece { transform:scale(1.08); }
+
+.chess-status {
+  min-height:36px;
+  font-size:0.82rem; color:var(--text-soft);
+  text-align:center; margin-bottom:16px;
+  transition: color 0.3s;
+}
+.chess-status.correct { color: #82C99A; }
+.chess-status.wrong   { color: var(--pp-dust); }
+.chess-status.reveal  { color: var(--tw-amber); }
+
+.chess-actions { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+.chess-btn {
+  background:none;
+  border:1px solid rgba(255,255,255,0.12);
+  color:var(--text-soft);
+  font-family:'Space Grotesk',sans-serif;
+  font-size:0.75rem; letter-spacing:0.1em;
+  padding:8px 22px; cursor:pointer;
+  transition:all 0.15s;
+}
+.chess-btn:hover { border-color:var(--fp-violet); color:var(--text); }
+.chess-btn.primary {
+  background:var(--fp-violet); border-color:var(--fp-violet); color:#fff;
+}
+.chess-btn.primary:hover { background:var(--fp-nebula); }
+
+/* 胜利粒子 */
+.chess-particle {
+  position:fixed; pointer-events:none; z-index:9998;
+  width:5px; height:5px; border-radius:50%;
+  animation: particle-fly 1s ease-out forwards;
+}
+@keyframes particle-fly {
+  0%   { opacity:1; transform:translate(0,0) scale(1); }
+  100% { opacity:0; transform:translate(var(--dx),var(--dy)) scale(0.2); }
+}
+</style>
+
+<script>
+/* ============================================================
+   CHESS ENGINE — 残局谜题
+   ============================================================ */
+
+/* ── 棋子符号 ── */
+const PIECES = {
+  wK:'♔', wQ:'♕', wR:'♖', wB:'♗', wN:'♘', wP:'♙',
+  bK:'♚', bQ:'♛', bR:'♜', bB:'♝', bN:'♞', bP:'♟'
+};
+
+/* ── 5道谜题 ── */
+const PUZZLES = [
+  {
+    title: '世纪之局的序章',
+    story: '1956年，美国棋手 <strong>Bobby Fischer</strong> 17岁。他面对 Donald Byrne，走出了后来被称为「世纪之局」最关键的牺牲。这道题是那局棋的终局变体——白方还剩什么？一步。',
+    /* FEN-like board: array[64], index=0 是 a8（左上），白方在下 */
+    board: [
+      null,  null,  null,  null, 'bK',  null,  null,  null,
+      null,  null,  null,  null,  null, 'bP',  null,  null,
+      null,  null,  null,  null,  null,  null,  null,  null,
+      null,  null,  null,  null,  null,  null, 'wQ',  null,
+      null,  null,  null,  null,  null,  null,  null,  null,
+      null,  null,  null,  null,  null,  null,  null,  null,
+      null,  null,  null,  null,  null,  null,  null,  null,
+      null,  null,  null,  null, 'wK',  null,  null,  null,
+    ],
+    /* 正确走法：[from_index, to_index] */
+    solution: [30, 4],   /* Qg5 → e8# (wQ g5->e8) */
+    solutionLabel: 'Qe8#',
+    wrongShake: true,
+  },
+  {
+    title: '永恒将死',
+    story: '这是国际象棋史上最早被记录的"窒息将死"之一。黑王被自己的棋子围死，白方一步走完所有故事。<strong>窒息将死</strong>（Smothered Mate）——最优雅的终结方式。',
+    board: [
+      'bR',  'bB',  'bQ',  null, 'bK',  null,  null, 'bR',
+      'bP',  'bP',  'bP',  null,  null, 'bP', 'bP', 'bP',
+      null,  null,  null,  null,  null,  null,  null,  null,
+      null,  null,  null, 'bP',  null,  null,  null,  null,
+      null,  null,  null,  null,  null,  null,  null,  null,
+      null,  null, 'wN',  null,  null,  null,  null,  null,
+      'wP',  'wP',  'wP',  null,  null, 'wP', 'wP', 'wP',
+      'wR',  null,  null,  null, 'wK',  null,  null, 'wR',
+    ],
+    solution: [42, 5],   /* Nc3->f8# smothered */
+    solutionLabel: 'Nf8#',
+    wrongShake: true,
+  },
+  {
+    title: '卡斯帕罗夫的冷静',
+    story: '1985年，<strong>Garry Kasparov</strong> 与 Anatoly Karpov 的世界冠军赛。Kasparov 的棋风以攻击著称，但最让人难忘的往往不是那些爆炸性的牺牲，而是在极端复杂局面下的绝对冷静——一步准确，全局结束。',
+    board: [
+      null,  null,  null,  null,  null,  null, 'bK',  null,
+      null,  null,  null,  null,  null, 'bP', 'bP',  null,
+      null,  null,  null,  null,  null,  null,  null, 'bP',
+      null,  null,  null,  null,  null,  null, 'wQ',  null,
+      null,  null,  null,  null,  null,  null,  null,  null,
+      null,  null,  null,  null,  null,  null,  null,  null,
+      null,  null,  null,  null,  null,  null,  null,  null,
+      null,  null,  null,  null, 'wK',  null,  null,  null,
+    ],
+    solution: [30, 13],  /* Qg5->f7# */
+    solutionLabel: 'Qf7#',
+    wrongShake: true,
+  },
+  {
+    title: '后的独舞',
+    story: '只剩一个后，对方还有车和象。表面上是劣势，但<strong>后是最孤独也最强大的棋子</strong>——它不需要任何人配合，一步走遍整个棋盘。这道题只需要找到她应该去的那个格子。',
+    board: [
+      null,  null,  null,  null, 'bK',  null,  null,  null,
+      null,  null,  null,  null,  null,  null,  null,  null,
+      null,  null,  null,  null,  null,  null,  null,  null,
+      null, 'bR',  null,  null,  null,  null,  null,  null,
+      null,  null, 'bB',  null,  null,  null,  null,  null,
+      null,  null,  null,  null,  null,  null,  null,  null,
+      null,  null,  null, 'wQ',  null,  null,  null,  null,
+      null,  null,  null,  null, 'wK',  null,  null,  null,
+    ],
+    solution: [51, 4],   /* Qd2->e8# */
+    solutionLabel: 'Qe8#',
+    wrongShake: true,
+  },
+  {
+    title: '马的悖论',
+    story: '马是国际象棋里最反直觉的棋子。它走"日"字，可以跳过障碍，威胁对方永远摸不准节奏。<strong>Magnus Carlsen</strong> 曾说：马是最难评估的棋子，因为它的力量在局部而不在全局。这道题，马只需一跳。',
+    board: [
+      null,  null,  null,  null, 'bK',  null,  null,  null,
+      null,  null, 'bP',  null,  null, 'bP',  null,  null,
+      null,  null,  null,  null,  null,  null,  null,  null,
+      null,  null,  null,  null,  null,  null,  null,  null,
+      null,  null,  null,  null,  null,  null,  null,  null,
+      null,  null,  null, 'wN',  null,  null,  null,  null,
+      null,  null,  null,  null,  null,  null,  null,  null,
+      null,  null,  null,  null, 'wK',  null,  null,  null,
+    ],
+    solution: [43, 5],   /* Nd3->f8# wait — Nd3 is index 43 → f8 index 5 */
+    solutionLabel: 'Nf8#',
+    wrongShake: true,
+  },
+];
+
+/* ── 状态 ── */
+let curPuzzle  = 0;
+let selected   = null;   /* 当前选中格子 index */
+let attempts   = 0;
+let solved     = false;
+let revealed   = false;
+const results  = [];     /* 每题结果 'solved'|'revealed'|null */
+
+/* ── 工具函数 ── */
+function idx2rc(i){ return { r: Math.floor(i/8), c: i%8 }; }
+function rc2idx(r,c){ return r*8+c; }
+function idx2alg(i){ const {r,c}=idx2rc(i); return 'abcdefgh'[c]+(8-r); }
+
+/* ── 渲染进度点 ── */
+function renderProgress(){
+  const dotsEl  = document.getElementById('cp-dots');
+  const labelEl = document.getElementById('cp-label');
+  dotsEl.innerHTML = '';
+  for(let i=0;i<PUZZLES.length;i++){
+    const d=document.createElement('div');
+    d.className='cp-dot'+(i<curPuzzle?' done':i===curPuzzle?' current':'');
+    dotsEl.appendChild(d);
+  }
+  labelEl.textContent = `题 ${curPuzzle+1} / ${PUZZLES.length}`;
+}
+
+/* ── 渲染棋盘 ── */
+function renderBoard(){
+  const p     = PUZZLES[curPuzzle];
+  const board = document.getElementById('chess-board');
+  const rankEl= document.getElementById('chess-coords-rank');
+  const fileEl= document.getElementById('chess-coords-file');
+  board.innerHTML=''; rankEl.innerHTML=''; fileEl.innerHTML='';
+
+  /* 故事 */
+  const storyEl=document.getElementById('chess-story');
+  storyEl.innerHTML=`<strong>${p.title}</strong><br><br>${p.story}`;
+
+  /* 坐标轴 */
+  for(let r=0;r<8;r++){
+    const s=document.createElement('span'); s.textContent=8-r;
+    rankEl.appendChild(s);
+  }
+  for(let c=0;c<8;c++){
+    const s=document.createElement('span'); s.textContent='abcdefgh'[c];
+    fileEl.appendChild(s);
+  }
+
+  /* 格子 */
+  p.board.forEach((piece,i)=>{
+    const {r,c}=idx2rc(i);
+    const cell=document.createElement('div');
+    cell.className='chess-cell '+((r+c)%2===0?'light':'dark');
+    cell.dataset.idx=i;
+    if(piece){
+      const span=document.createElement('span');
+      const isWhite=piece.startsWith('w');
+      span.className='chess-piece '+(isWhite?'white':'black');
+      span.textContent=PIECES[piece];
+      cell.appendChild(span);
+    }
+    cell.addEventListener('click',()=>onCellClick(i));
+    board.appendChild(cell);
+  });
+}
+
+/* ── 点击格子 ── */
+function onCellClick(idx){
+  if(solved||revealed) return;
+  const p=PUZZLES[curPuzzle];
+  const piece=p.board[idx];
+
+  /* 没有选中 → 选白棋 */
+  if(selected===null){
+    if(!piece||!piece.startsWith('w')) return;
+    selected=idx;
+    highlightSelected();
+    return;
+  }
+
+  /* 已选中，点同一格 → 取消 */
+  if(selected===idx){
+    selected=null;
+    clearHighlights();
+    return;
+  }
+
+  /* 已选中，点其他白棋 → 换选 */
+  if(piece&&piece.startsWith('w')){
+    selected=idx;
+    highlightSelected();
+    return;
+  }
+
+  /* 已选中，尝试走棋 */
+  const move=[selected,idx];
+  selected=null;
+  clearHighlights();
+  checkMove(move);
+}
+
+function highlightSelected(){
+  clearHighlights();
+  const cells=document.querySelectorAll('.chess-cell');
+  cells[selected].classList.add('selected');
+  /* 显示合法目标格（简化：只显示答案格提示） */
+}
+
+function clearHighlights(){
+  document.querySelectorAll('.chess-cell').forEach(c=>{
+    c.classList.remove('selected','highlight','hint-move');
+  });
+}
+
+/* ── 判断走法 ── */
+function checkMove([from,to]){
+  const p=PUZZLES[curPuzzle];
+  const [sf,st]=p.solution;
+  if(from===sf&&to===st){
+    onCorrect();
+  } else {
+    onWrong();
+  }
+}
+
+function onCorrect(){
+  solved=true;
+  results[curPuzzle]='solved';
+  /* 动画：棋子移到目标格 */
+  const p=PUZZLES[curPuzzle];
+  const [sf,st]=p.solution;
+  const cells=document.querySelectorAll('.chess-cell');
+  const piece=p.board[sf];
+  p.board[st]=piece; p.board[sf]=null;
+  cells[sf].innerHTML='';
+  cells[st].innerHTML='';
+  const span=document.createElement('span');
+  const isW=piece.startsWith('w');
+  span.className='chess-piece '+(isW?'white':'black');
+  span.textContent=PIECES[piece];
+  cells[st].appendChild(span);
+  cells[st].classList.add('highlight');
+
+  const statusEl=document.getElementById('chess-status');
+  statusEl.className='chess-status correct';
+  statusEl.innerHTML=`✦ <strong>${p.solutionLabel}</strong> — 将死。`;
+
+  fireParticles(cells[st]);
+
+  document.getElementById('chess-reveal').style.display='none';
+  if(curPuzzle<PUZZLES.length-1){
+    document.getElementById('chess-next').style.display='';
+  } else {
+    document.getElementById('chess-restart').style.display='';
+    document.getElementById('chess-next').style.display='none';
+    showFinalMessage();
+  }
+}
+
+function onWrong(){
+  attempts++;
+  const statusEl=document.getElementById('chess-status');
+  statusEl.className='chess-status wrong';
+  const left=3-attempts;
+  statusEl.textContent= left>0
+    ? `不对。还有 ${left} 次机会。`
+    : '算了，给你看答案吧。';
+
+  /* 棋盘震动 */
+  const board=document.getElementById('chess-board');
+  board.classList.add('shake');
+  setTimeout(()=>board.classList.remove('shake'),400);
+
+  if(attempts>=3) chessReveal();
+}
+
+function chessReveal(){
+  if(revealed||solved) return;
+  revealed=true;
+  results[curPuzzle]='revealed';
+  const p=PUZZLES[curPuzzle];
+  const [sf,st]=p.solution;
+  const cells=document.querySelectorAll('.chess-cell');
+  cells[sf].classList.add('highlight');
+  cells[st].classList.add('highlight');
+
+  const statusEl=document.getElementById('chess-status');
+  statusEl.className='chess-status reveal';
+  statusEl.innerHTML=`答案是 <strong>${p.solutionLabel}</strong>。${idx2alg(sf)} → ${idx2alg(st)}。`;
+
+  document.getElementById('chess-reveal').style.display='none';
+  if(curPuzzle<PUZZLES.length-1){
+    document.getElementById('chess-next').style.display='';
+  } else {
+    document.getElementById('chess-restart').style.display='';
+  }
+}
+
+function chessNext(){
+  curPuzzle++;
+  selected=null; attempts=0; solved=false; revealed=false;
+  document.getElementById('chess-next').style.display='none';
+  document.getElementById('chess-reveal').style.display='';
+  document.getElementById('chess-status').className='chess-status';
+  document.getElementById('chess-hint').textContent='点击白方棋子，再点击目标格';
+  renderProgress();
+  renderBoard();
+}
+
+function chessRestart(){
+  curPuzzle=0; selected=null; attempts=0; solved=false; revealed=false;
+  results.length=0;
+  document.getElementById('chess-restart').style.display='none';
+  document.getElementById('chess-next').style.display='none';
+  document.getElementById('chess-reveal').style.display='';
+  document.getElementById('chess-status').className='chess-status';
+  document.getElementById('chess-hint').textContent='点击白方棋子，再点击目标格';
+  renderProgress();
+  renderBoard();
+}
+
+function showFinalMessage(){
+  const statusEl=document.getElementById('chess-status');
+  const solved_count=results.filter(r=>r==='solved').length;
+  const msgs=[
+    '全靠自己解出来的。棋感不错。',
+    '有几道要看答案，但你坚持到最后了。',
+    '下次会更快的。'
+  ];
+  const msg = solved_count===5 ? msgs[0] : solved_count>=3 ? msgs[1] : msgs[2];
+  setTimeout(()=>{
+    statusEl.innerHTML += `<br><br><em>${msg}</em>`;
+  },1200);
+}
+
+/* ── 胜利粒子 ── */
+function fireParticles(anchorEl){
+  const rect=anchorEl.getBoundingClientRect();
+  const cx=rect.left+rect.width/2;
+  const cy=rect.top+rect.height/2;
+  const colors=['#E8B4C0','#9B6AAC','#F0D8B0','#C8945A','#E8D4F0'];
+  for(let i=0;i<28;i++){
+    const p=document.createElement('div');
+    p.className='chess-particle';
+    const angle=Math.random()*Math.PI*2;
+    const dist=60+Math.random()*100;
+    p.style.cssText=`
+      left:${cx}px; top:${cy}px;
+      background:${colors[i%colors.length]};
+      --dx:${Math.cos(angle)*dist}px;
+      --dy:${Math.sin(angle)*dist}px;
+      animation-delay:${Math.random()*0.15}s;
+    `;
+    document.body.appendChild(p);
+    setTimeout(()=>p.remove(),1200);
+  }
+}
+
+/* ── 初始化 ── */
+(function initChess(){
+  renderProgress();
+  renderBoard();
+})();
+</script>
+
 </html>
