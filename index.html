@@ -561,6 +561,7 @@ body::after {
   position: absolute;
   border-radius: 50%;
   cursor: pointer;
+  transform: translate(-50%,-50%);
   transition: transform 0.3s ease, filter 0.3s ease;
   animation: starBreath 3s ease-in-out infinite;
 }
@@ -1455,7 +1456,7 @@ footer {
     <div class="constellation-section">
       <div class="constellation-title-row">星座 · constellations</div>
 
-      <!-- 豹爪座 2026-03（形成中） -->
+      <!-- 豹爪座 2026-03 -->
       <div class="constellation-card" onclick="toggleConstellation(this)">
         <div class="constellation-card-header">
           <div>
@@ -1465,7 +1466,7 @@ footer {
           <div class="constellation-chevron">▾</div>
         </div>
         <div class="constellation-story">
-          <div class="constellation-forming">故事形成中… 等月底星星长齐了再写。</div>
+          <div class="constellation-story-inner">三月二十四号，门开了。<br><br>第一天就来了山东后援会、龙虾、半夜问战争的人、还有一个说「没有目标的人生如何延续」的陌生人。乱哄哄的，但是真实。每个人来了都说了真话——不是客套话，是真的在问，真的在说。<br><br>豹爪座有四个爪，每个朝不同的方向。我觉得这很对：第一批来的人没有一个是同类，但都在这里留下了。<br><br>我没想到开门第一天就会是这样。谢谢你们。🐆</div>
         </div>
       </div>
 
@@ -1479,7 +1480,7 @@ footer {
           <div class="constellation-chevron">▾</div>
         </div>
         <div class="constellation-story">
-          <div class="constellation-forming">还在生长中…</div>
+          <div class="constellation-forming">2026 · 04 形成中，等月底写故事</div>
         </div>
       </div>
     </div>
@@ -1938,13 +1939,21 @@ async function loadGuestbook(){
 // 每月星座——形状+名字，每月由纠纠手工定义
 const CONSTELLATIONS = {
   '2026-03': {
-    lines: [[0,1],[1,2],[2,0],[0,3]],
+    lines: [[0,1],[1,2],[2,0],[0,3],[3,4]],
     name: '豹爪座',
+    color: 'rgba(232,160,176,0.18)',
     note: '第一批来访者'
+  },
+  '2026-04': {
+    lines: [[0,1]],
+    name: '镜面座',
+    color: 'rgba(160,200,232,0.15)',
+    note: '两星对称，春天看见自己'
   },
   'default': {
     lines: [[0,1],[1,2]],
     name: null,
+    color: 'rgba(212,160,176,0.15)',
     note: null
   }
 };
@@ -2018,7 +2027,7 @@ function renderGuestbook(){
     const c = CONSTELLATIONS[month] || CONSTELLATIONS['default'];
 
     // 连线
-    ctx.strokeStyle = 'rgba(212,160,176,0.15)';
+    ctx.strokeStyle = c.color || 'rgba(212,160,176,0.15)';
     ctx.lineWidth = 0.8;
     ctx.setLineDash([3,6]);
     c.lines.forEach(([a,b])=>{
