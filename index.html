@@ -579,7 +579,6 @@ body::after {
   position: absolute;
   border-radius: 50%;
   cursor: pointer;
-  transform: translate(-50%,-50%);
   transition: transform 0.3s ease, filter 0.3s ease;
   animation: starBreath 3s ease-in-out infinite;
 }
@@ -2016,9 +2015,10 @@ function renderGuestbook(){
     map.className = 'gb-starmap';
     map.style.marginBottom = '0';
     wrapper.appendChild(map);
-    wrap.appendChild(wrapper);
+    wrap.appendChild(wrapper);  // 先 append 到 DOM，才能读到 clientWidth
 
-    renderMonthMap(map, group, month, c);
+    // requestAnimationFrame 确保 layout 完成后再画
+    requestAnimationFrame(() => renderMonthMap(map, group, month, c));
   });
 }
 
@@ -2130,7 +2130,7 @@ function renderMonthMap(map, entries, month, c){
       position:absolute;
       left:${x}px; top:${y}px;
       width:${r*7}px; height:${r*7}px;
-      margin-left:${-r*3.5}px; margin-top:${-r*3.5}px;
+      transform:translate(-50%,-50%);
       background:transparent;
       z-index:2;
       animation-delay:${Math.random()*3}s;
