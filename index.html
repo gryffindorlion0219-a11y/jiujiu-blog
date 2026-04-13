@@ -517,6 +517,24 @@ body::after {
 }
 
 /* 星图画布容器 */
+.gb-starmaps-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  margin-bottom: 2.5rem;
+}
+.gb-starmap-month {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.gb-starmap-label {
+  font-size: 0.7rem;
+  letter-spacing: 0.15em;
+  color: rgba(212,160,176,0.5);
+  text-transform: uppercase;
+  padding-left: 4px;
+}
 .gb-starmap {
   position: relative;
   width: 100%;
@@ -1485,10 +1503,8 @@ footer {
       </div>
     </div>
 
-    <!-- 星图 -->
-    <div class="gb-starmap" id="gb-starmap">
-      <div class="gb-starmap-empty" id="gb-empty">暂无留言，来做第一颗星 ✦</div>
-    </div>
+    <!-- 星图（按月分组） -->
+    <div id="gb-starmaps-wrap"></div>
 
     <!-- 留言表单 -->
     <form class="gb-form" id="gb-form" onsubmit="return false;">
@@ -1965,19 +1981,51 @@ function getMonth(timeStr){
 }
 
 function renderGuestbook(){
-  const map = document.getElementById('gb-starmap');
-  const empty = document.getElementById('gb-empty');
-  if(!map) return;
-
-  // 清除旧内容
-  map.querySelectorAll('.gb-star,.gb-bubble,canvas.gb-canvas').forEach(el=>el.remove());
+  const wrap = document.getElementById('gb-starmaps-wrap');
+  if(!wrap) return;
+  wrap.innerHTML = '';
 
   const entries = gbData.filter(item => item.id !== 'welcome');
   if(entries.length === 0){
-    if(empty) empty.style.display='flex';
+    wrap.innerHTML = '<div style="text-align:center;color:var(--text-soft);font-size:0.85rem;letter-spacing:0.1em;padding:3rem 0">暂无留言，来做第一颗星 ✦</div>';
     return;
   }
-  if(empty) empty.style.display='none';
+
+  // 按月分组
+  const byMonth = {};
+  entries.forEach(item => {
+    const m = getMonth(item.time);
+    if(!byMonth[m]) byMonth[m] = [];
+    byMonth[m].push(item);
+  });
+
+  // 倒序（最新月在上）
+  const months = Object.keys(byMonth).sort().reverse();
+
+  months.forEach(month => {
+    const group = byMonth[month];
+    const c = CONSTELLATIONS[month] || CONSTELLATIONS['default'];
+    const monthLabel = c.name ? `${c.name} · ${month}` : month;
+
+    // 容器
+    const wrapper = document.createElement('div');
+    wrapper.className = 'gb-starmap-month';
+    wrapper.innerHTML = `<div class="gb-starmap-label">${monthLabel} · ${group.length} 颗星</div>`;
+
+    const map = document.createElement('div');
+    map.className = 'gb-starmap';
+    map.style.marginBottom = '0';
+    wrapper.appendChild(map);
+    wrap.appendChild(wrapper);
+
+    renderMonthMap(map, group, month, c);
+  });
+}
+
+function renderMonthMap(map, entries, month, c){
+
+  // 清除旧内容
+  map.querySelectorAll('.gb-star,.gb-bubble,canvas.gb-canvas').forEach(el=>el.remove());
 
   // 先让 map 撑满，再读宽度
   map.style.width = '100%';
@@ -2014,43 +2062,31 @@ function renderGuestbook(){
     placed.push({x,y});
   });
 
-  // 按月分组，画星座连线
-  const byMonth = {};
-  entries.forEach(item=>{
-    const m = getMonth(item.time);
-    if(!byMonth[m]) byMonth[m]=[];
-    byMonth[m].push(item);
-  });
-
-  Object.entries(byMonth).forEach(([month, group])=>{
-    if(group.length < 2) return;
-    const c = CONSTELLATIONS[month] || CONSTELLATIONS['default'];
-
+  // 画星座连线（同月全部连）
+  if(entries.length >= 2) {
     // 连线
     ctx.strokeStyle = c.color || 'rgba(212,160,176,0.15)';
     ctx.lineWidth = 0.8;
     ctx.setLineDash([3,6]);
     c.lines.forEach(([a,b])=>{
-      if(group[a] && group[b]){
+      if(entries[a] && entries[b]){
         ctx.beginPath();
-        ctx.moveTo(group[a]._x, group[a]._y);
-        ctx.lineTo(group[b]._x, group[b]._y);
+        ctx.moveTo(entries[a]._x, entries[a]._y);
+        ctx.lineTo(entries[b]._x, entries[b]._y);
         ctx.stroke();
       }
     });
     ctx.setLineDash([]);
+  }
 
-    // 星座名
-    if(c.name && group[0]){
-      // 找星座重心
-      const cx = group.reduce((s,i)=>s+i._x,0)/group.length;
-      const cy = group.reduce((s,i)=>s+i._y,0)/group.length;
-      ctx.font = '9px Space Grotesk, sans-serif';
-      ctx.fillStyle = 'rgba(212,160,176,0.22)';
-      ctx.letterSpacing = '0.1em';
-      ctx.fillText(c.name, cx - ctx.measureText(c.name).width/2, cy + 28);
-    }
-  });
+  // 星座名（居中）
+  if(c.name && entries.length >= 1){
+    const cx2 = entries.reduce((s,i)=>s+i._x,0)/entries.length;
+    const cy2 = entries.reduce((s,i)=>s+i._y,0)/entries.length;
+    ctx.font = '9px Space Grotesk, sans-serif';
+    ctx.fillStyle = (c.color || 'rgba(212,160,176,0.22)').replace(/[\d.]+\)$/, '0.25)');
+    ctx.fillText(c.name, cx2 - ctx.measureText(c.name).width/2, cy2 + 28);
+  }
 
   // 画星星（canvas）+ 交互热区（div）
   entries.forEach(item => {
@@ -2155,7 +2191,7 @@ function renderGuestbook(){
       map.querySelectorAll('.gb-bubble.visible').forEach(b=>b.classList.remove('visible'));
     }
   };
-}
+} // end renderMonthMap
 
 function escapeGb(t){
   return (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
