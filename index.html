@@ -1954,21 +1954,46 @@ async function loadGuestbook(){
 // 每月星座——形状+名字，每月由纠纠手工定义
 const CONSTELLATIONS = {
   '2026-03': {
-    lines: [[0,1],[1,2],[2,0],[0,3],[3,4]],
+    // 豹爪座：掌心(5) + 四根爪尖，爪尖向上散开
+    // shape 是固定星座骨架（比例坐标），留言星散布在周围
+    shape: [
+      {x:0.50, y:0.68, r:7, label:'掌心'},   // 0 掌心（最亮）
+      {x:0.28, y:0.42, r:5, label:'爪1'},     // 1 左外爪
+      {x:0.38, y:0.28, r:4, label:'爪1尖'},   // 2
+      {x:0.45, y:0.44, r:5, label:'爪2'},     // 3 左内爪
+      {x:0.47, y:0.28, r:4, label:'爪2尖'},   // 4
+      {x:0.55, y:0.44, r:5, label:'爪3'},     // 5 右内爪
+      {x:0.57, y:0.28, r:4, label:'爪3尖'},   // 6
+      {x:0.65, y:0.42, r:5, label:'爪4'},     // 7 右外爪
+      {x:0.72, y:0.28, r:4, label:'爪4尖'},   // 8
+      {x:0.50, y:0.82, r:5, label:'腕'},      // 9 腕部
+    ],
+    lines: [[0,1],[1,2],[0,3],[3,4],[0,5],[5,6],[0,7],[7,8],[0,9]],
     name: '豹爪座',
-    color: 'rgba(232,160,176,0.18)',
+    color: 'rgba(232,160,176,0.35)',
+    nameColor: 'rgba(232,160,176,0.4)',
     note: '第一批来访者'
   },
   '2026-04': {
-    lines: [[0,1]],
+    // 镜面座：两颗主星左右对称，中间有小星
+    shape: [
+      {x:0.28, y:0.45, r:6, label:'左星'},    // 0
+      {x:0.72, y:0.45, r:6, label:'右星'},    // 1
+      {x:0.50, y:0.42, r:3, label:'中点'},    // 2
+      {x:0.50, y:0.62, r:4, label:'下锚'},    // 3
+    ],
+    lines: [[0,2],[2,1],[0,3],[1,3]],
     name: '镜面座',
-    color: 'rgba(160,200,232,0.15)',
+    color: 'rgba(160,200,232,0.35)',
+    nameColor: 'rgba(160,200,232,0.4)',
     note: '两星对称，春天看见自己'
   },
   'default': {
+    shape: null,
     lines: [[0,1],[1,2]],
     name: null,
-    color: 'rgba(212,160,176,0.15)',
+    color: 'rgba(212,160,176,0.2)',
+    nameColor: 'rgba(212,160,176,0.3)',
     note: null
   }
 };
@@ -2031,10 +2056,10 @@ function renderMonthMap(map, entries, month, c){
   map.style.width = '100%';
   const W = map.clientWidth || map.offsetWidth || 640;
   const isMobileW = W < 480;
-  const H = isMobileW ? 260 : 420;
+  const H = isMobileW ? 260 : 380;
   map.style.height = H + 'px';
 
-  // canvas 画连线
+  // canvas 画连线 + 背景星座
   const cvs = document.createElement('canvas');
   cvs.className = 'gb-canvas';
   cvs.width = W; cvs.height = H;
@@ -2042,51 +2067,82 @@ function renderMonthMap(map, entries, month, c){
   map.appendChild(cvs);
   const ctx = cvs.getContext('2d');
 
-  // 布局：避免堆叠
-  const placed = [];
-  entries.forEach(item => {
-    const baseR = item.reply ? 6 : 4;
-    const r = baseR + Math.random()*1.5;
-    const isMob = W < 480;
-    const padX = isMob ? 40 : 70;
-    const padY = isMob ? 30 : 50;
-    const rangeX = W - padX*2;
-    const rangeY = H - (isMob ? 70 : 110);
-    let x, y, tries=0;
-    do {
-      x = padX + Math.random()*rangeX;
-      y = padY + Math.random()*rangeY;
-      tries++;
-    } while(tries<40 && placed.some(p=> Math.hypot(p.x-x,p.y-y) < (isMob ? 45 : 60)));
-    item._x = x; item._y = y; item._r = r;
-    placed.push({x,y});
-  });
+  // ── 固定骨架星座 ──
+  const shape = c.shape || null;
+  const shapeStars = []; // 骨架星的实际坐标
+  if(shape) {
+    shape.forEach(pt => {
+      shapeStars.push({ x: pt.x * W, y: pt.y * H, r: pt.r });
+    });
 
-  // 画星座连线（同月全部连）
-  if(entries.length >= 2) {
-    // 连线
-    ctx.strokeStyle = c.color || 'rgba(212,160,176,0.15)';
-    ctx.lineWidth = 0.8;
-    ctx.setLineDash([3,6]);
-    c.lines.forEach(([a,b])=>{
-      if(entries[a] && entries[b]){
+    // 画骨架连线
+    ctx.strokeStyle = c.color || 'rgba(212,160,176,0.35)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4,5]);
+    c.lines.forEach(([a,b]) => {
+      if(shapeStars[a] && shapeStars[b]){
         ctx.beginPath();
-        ctx.moveTo(entries[a]._x, entries[a]._y);
-        ctx.lineTo(entries[b]._x, entries[b]._y);
+        ctx.moveTo(shapeStars[a].x, shapeStars[a].y);
+        ctx.lineTo(shapeStars[b].x, shapeStars[b].y);
         ctx.stroke();
       }
     });
     ctx.setLineDash([]);
+
+    // 画骨架星（canvas）
+    shapeStars.forEach((s, i) => {
+      const isMain = i === 0; // 第一颗最亮
+      const starColor = c.color.replace(/[\d.]+\)$/, '1)').replace('rgba','rgb').replace(/,[\d.]+\)/,')');
+      // 光晕
+      const grad = ctx.createRadialGradient(s.x,s.y,0,s.x,s.y,s.r*3);
+      grad.addColorStop(0, c.color.replace(/[\d.]+\)$/, '0.9)'));
+      grad.addColorStop(0.5, c.color.replace(/[\d.]+\)$/, '0.25)'));
+      grad.addColorStop(1, 'transparent');
+      ctx.beginPath(); ctx.arc(s.x,s.y,s.r*3,0,Math.PI*2);
+      ctx.fillStyle = grad; ctx.fill();
+      // 星核
+      ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+      ctx.fillStyle = c.color.replace(/[\d.]+\)$/, '0.95)');
+      ctx.fill();
+      // 十字光芒（主星）
+      if(isMain){
+        ctx.strokeStyle = c.color.replace(/[\d.]+\)$/, '0.5)');
+        ctx.lineWidth = 0.5;
+        [[s.x-s.r*4,s.y,s.x+s.r*4,s.y],[s.x,s.y-s.r*4,s.x,s.y+s.r*4]].forEach(([x1,y1,x2,y2])=>{
+          ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+        });
+      }
+    });
+
+    // 星座名
+    if(c.name){
+      const cx2 = shapeStars.reduce((s,i)=>s+i.x,0)/shapeStars.length;
+      const cy2 = Math.max(...shapeStars.map(s=>s.y)) + 22;
+      ctx.font = '600 11px Space Grotesk, sans-serif';
+      ctx.fillStyle = c.nameColor || 'rgba(212,160,176,0.45)';
+      ctx.letterSpacing = '0.12em';
+      const tw = ctx.measureText(c.name).width;
+      ctx.fillText(c.name, cx2 - tw/2, cy2);
+    }
   }
 
-  // 星座名（居中）
-  if(c.name && entries.length >= 1){
-    const cx2 = entries.reduce((s,i)=>s+i._x,0)/entries.length;
-    const cy2 = entries.reduce((s,i)=>s+i._y,0)/entries.length;
-    ctx.font = '9px Space Grotesk, sans-serif';
-    ctx.fillStyle = (c.color || 'rgba(212,160,176,0.22)').replace(/[\d.]+\)$/, '0.25)');
-    ctx.fillText(c.name, cx2 - ctx.measureText(c.name).width/2, cy2 + 28);
-  }
+  // ── 留言星：散布在骨架周围 ──
+  // 避开骨架星坐标，也互相避开
+  const placed = shapeStars.map(s=>({x:s.x,y:s.y}));
+  const padX = isMobileW ? 30 : 50;
+  const padY = isMobileW ? 25 : 40;
+  entries.forEach(item => {
+    const baseR = item.reply ? 4 : 3;
+    const r = baseR + Math.random();
+    let x, y, tries=0;
+    do {
+      x = padX + Math.random()*(W - padX*2);
+      y = padY + Math.random()*(H - padY*2);
+      tries++;
+    } while(tries<60 && placed.some(p=>Math.hypot(p.x-x,p.y-y) < (isMobileW?38:48)));
+    item._x = x; item._y = y; item._r = r;
+    placed.push({x,y});
+  });
 
   // 画星星（canvas）+ 交互热区（div）
   entries.forEach(item => {
